@@ -238,12 +238,11 @@ BUILD
 
     [Windows]
 
-      You have to have the command line environment setup before (usually the vcvars32.bat
-      script inside the Visual C++ directory). You also need to copy the openSSL DLLs
-      (located in "win32ssl\dll") inside the same folder where the XMail.exe binary resides.
+      You have to have the command line environment setup before (usually the vcvars64.bat
+      script inside the Visual C++ directory).
 
       C:> nmake /f Makefile.win
-  
+
       If once you run the XMail binaries, Windows complains about missing DLLs, your system
       is probably missing the Microsoft CRT redistributable package, that you can download
       here L<http://www.xmailserver.org/vcredist_x86.exe>.
@@ -397,8 +396,7 @@ CONFIGURATION
         this you can run XMail as a console startup only if you're
         Administrator (service startup as System).
 
-    4.  Copy XMail executables to 'C:\MailRoot\bin'. Also copy the OpenSSL
-        DLLs located in "win32ssl\dll" to 'C:\MailRoot\bin'.
+    4.  Copy XMail executables to 'C:\MailRoot\bin'.
 
     5.  With 'regedit', create 'GNU' key inside
         'HKEY_LOCAL_MACHINE\SOFTWARE\' and then 'XMail' key inside
@@ -2601,7 +2599,7 @@ SSL CONFIGURATION
     support, you need to have access to the OpenSSL binary. For Unix ports,
     this is available as a package, whose name varies depending on the
     distribution. For Windows, pre-built versions of theOpenSSL libraries
-    and binary are supplied inside the "win32ssl" directory of the XMail
+    and binary are supplied inside the "win64ssl" directory of the XMail
     source package. For example, to create a self-signed certificate, you
     first have to create a private key with:
 
@@ -2620,11 +2618,11 @@ SSL CONFIGURATION
     authority, you need to generate a certificate request file:
 
       $ openssl req -new -key server.key -out cert.csr
-  
+
       C:> openssl req -new -key server.key -out cert.csr -config openssl.cnf
 
     The 'openssl.cnf' file is supplied inside the Xmail's Windows binary
-    package, and inside the 'win32ssl\conf' directory of the source package.
+    package, and inside the 'win64ssl\conf' directory of the source package.
     The 'cert.csr' file needs then to be submitted to the certificate
     authority in order to obtain a root-signed certificate file (that will
     be your 'server.cert'). The behaviour of the XMail SSL module is
@@ -2663,10 +2661,10 @@ SSL CONFIGURATION
         'CERTS' XMail sub-directory. The 'CERTS' contains hashed file names
         that are created by feeding the directory path to the 'c_rehash'
         OpenSSL Perl script (a Windows-friendly version of 'c_rehash', named
-        'c_rehash.pl' is contained inside the 'win32ssl\bin' subdirectory of
+        'c_rehash.pl' is contained inside the 'win64ssl\bin' subdirectory of
         the source package). Unix users will find proper CA certificates
         inside the standard install paths of OpenSSL, while Windows users
-        will find them inside the 'win32ssl\certs' subdirectory of the
+        will find them inside the 'win64ssl\certs' subdirectory of the
         source package. To use 'c_rehash' you need to have the OpenSSL
         binaries (executable and shared libraries) correctly installed in
         your system, and the executable reachable from your PATH. Then you
@@ -4409,16 +4407,4 @@ THANKS
     All of the free source community, for giving me code and knowledge.
 
     [top]
-
-POD ERRORS
-
-    Hey! The above document had some coding errors, which are explained
-    below:
-
-    Around line 793:
-        =back doesn't take any parameters, but you said =back end html
-
-    Around line 1821:
-        You can't have =items (as at line 1827) unless the first thing after
-        the =over is an =item
 

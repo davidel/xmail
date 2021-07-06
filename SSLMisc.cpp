@@ -42,11 +42,10 @@
 
 int SSLGetRandBytes(unsigned char *pBytes, int iCount)
 {
-	if (!RAND_pseudo_bytes(pBytes, iCount)) {
+	if (!RAND_bytes(pBytes, iCount)) {
 		ErrSetErrorCode(ERR_GET_RAND_BYTES);
 		return ERR_GET_RAND_BYTES;
 	}
 
 	return 0;
 }
-

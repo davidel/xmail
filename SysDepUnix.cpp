@@ -1586,6 +1586,22 @@ int SysExistDir(char const *pszDirPath)
 	return S_ISDIR(FStat.st_mode) ? 1: 0;
 }
 
+static struct dirent *SysReadDir(DIR *pDIR, struct dirent *pDirEntry) {
+	struct dirent *pResult;
+#if (_POSIX_C_SOURCE - 0) >= 200112L
+	(void) pDirEntry;
+	pResult = readdir(pDIR);
+#else
+#if (_POSIX_C_SOURCE - 0 >= 199506L) || defined(_POSIX_PTHREAD_SEMANTICS)
+	readdir_r(pDIR, pDirEntry, &pResult);
+#else
+	pResult = readdir_r(pDIR, pDirEntry);
+#endif
+#endif
+
+	return pResult;
+}
+
 SYS_HANDLE SysFirstFile(char const *pszPath, char *pszFileName, int iSize)
 {
 	DIR *pDIR = opendir(pszPath);
@@ -1596,13 +1612,7 @@ SYS_HANDLE SysFirstFile(char const *pszPath, char *pszFileName, int iSize)
 	}
 
 	FilledDirent FDE;
-	struct dirent *pDirEntry = NULL;
-
-#if (_POSIX_C_SOURCE - 0 >= 199506L) || defined(_POSIX_PTHREAD_SEMANTICS)
-	readdir_r(pDIR, &FDE.DE, &pDirEntry);
-#else
-	pDirEntry = readdir_r(pDIR, &FDE.DE);
-#endif
+	struct dirent *pDirEntry = SysReadDir(pDIR, &FDE.DE);
 
 	if (pDirEntry == NULL) {
 		closedir(pDIR);
@@ -1619,14 +1629,13 @@ SYS_HANDLE SysFirstFile(char const *pszPath, char *pszFileName, int iSize)
 	strcpy(pFFD->szPath, pszPath);
 	AppendSlash(pFFD->szPath);
 	pFFD->pDIR = pDIR;
-	pFFD->FDE = FDE;
 
-	StrNCpy(pszFileName, pFFD->FDE.DE.d_name, iSize);
+	StrNCpy(pszFileName, pDirEntry->d_name, iSize);
 
 	char szFilePath[SYS_MAX_PATH];
 
 	snprintf(szFilePath, sizeof(szFilePath) - 1, "%s%s", pFFD->szPath,
-		 pFFD->FDE.DE.d_name);
+		 pDirEntry->d_name);
 	if (stat(szFilePath, &pFFD->FStat) != 0) {
 		SysFree(pFFD);
 		closedir(pDIR);
@@ -1655,23 +1664,18 @@ SYS_OFF_T SysGetSize(SYS_HANDLE hFind)
 int SysNextFile(SYS_HANDLE hFind, char *pszFileName, int iSize)
 {
 	FileFindData *pFFD = (FileFindData *) hFind;
-	struct dirent *pDirEntry = NULL;
-
-#if (_POSIX_C_SOURCE - 0 >= 199506L) || defined(_POSIX_PTHREAD_SEMANTICS)
-	readdir_r(pFFD->pDIR, &pFFD->FDE.DE, &pDirEntry);
-#else
-	pDirEntry = readdir_r(pFFD->pDIR, &pFFD->FDE.DE);
-#endif
+	FilledDirent FDE;
+	struct dirent *pDirEntry = SysReadDir(pFFD->pDIR, &FDE.DE);
 
 	if (pDirEntry == NULL)
 		return 0;
 
-	StrNCpy(pszFileName, pFFD->FDE.DE.d_name, iSize);
+	StrNCpy(pszFileName, pDirEntry->d_name, iSize);
 
 	char szFilePath[SYS_MAX_PATH];
 
 	snprintf(szFilePath, sizeof(szFilePath) - 1, "%s%s", pFFD->szPath,
-		 pFFD->FDE.DE.d_name);
+		 pDirEntry->d_name);
 	if (stat(szFilePath, &pFFD->FStat) != 0) {
 		ErrSetErrorCode(ERR_STAT);
 		return 0;
@@ -1953,4 +1957,3 @@ int SysUnmapMMap(SYS_MMAP hMap, void *pAddr, SYS_SIZE_T lSize)
 
 	return 0;
 }
-

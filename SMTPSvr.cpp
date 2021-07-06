@@ -53,6 +53,7 @@
 #define STD_SMTP_TIMEOUT        30000
 #define SMTP_IPMAP_FILE         "smtp.ipmap.tab"
 #define SMTP_LOG_FILE           "smtp"
+#define SMTP_POST_CONN_FILTER   "post-conn"
 #define SMTP_POST_RCPT_FILTER   "post-rcpt"
 #define SMTP_PRE_DATA_FILTER    "pre-data"
 #define SMTP_POST_DATA_FILTER   "post-data"
@@ -164,6 +165,7 @@ static char const *SMTPGetFilterExtname(char const *pszFiltID)
 		char const *pszFiltID;
 		char const *pszName;
 	} const FiltIdNames[] = {
+		{ SMTP_POST_CONN_FILTER, "CONN" },
 		{ SMTP_POST_RCPT_FILTER, "RCPT" },
 		{ SMTP_PRE_DATA_FILTER, "PREDATA" },
 		{ SMTP_POST_DATA_FILTER, "POSTDATA" },
@@ -377,6 +379,228 @@ static int SMTPCheckMapsList(SYS_INET_ADDR const &PeerInfo, char const *pszMapLi
 	return 0;
 }
 
+static int SMTPGetFilterFile(char const *pszFiltID, char *pszFileName, int iMaxName)
+{
+	char szMailRoot[SYS_MAX_PATH] = "";
+
+	CfgGetRootPath(szMailRoot, sizeof(szMailRoot));
+	SysSNPrintf(pszFileName, iMaxName - 1, "%sfilters.%s.tab", szMailRoot, pszFiltID);
+
+	return SysExistFile(pszFileName);
+}
+
+static char *SMTPMacroLkupProc(void *pPrivate, char const *pszName, int iSize)
+{
+	SMTPSession *pSMTPS = (SMTPSession *) pPrivate;
+
+	if (MemMatch(pszName, iSize, "FROM", 4)) {
+
+		return SysStrDup(pSMTPS->pszFrom != NULL ? pSMTPS->pszFrom: "-");
+	} else if (MemMatch(pszName, iSize, "CRCPT", 5)) {
+
+		return SysStrDup(pSMTPS->pszRcpt != NULL ? pSMTPS->pszRcpt: "-");
+	} else if (MemMatch(pszName, iSize, "RRCPT", 5)) {
+
+		return SysStrDup(pSMTPS->pszRealRcpt != NULL ?
+				 pSMTPS->pszRealRcpt: pSMTPS->pszRcpt != NULL ?
+				 pSMTPS->pszRcpt: "-");
+	} else if (MemMatch(pszName, iSize, "FILE", 4)) {
+
+		return SysStrDup(pSMTPS->szMsgFile);
+	} else if (MemMatch(pszName, iSize, "LOCALADDR", 9)) {
+		char szAddr[128] = "";
+
+		MscGetAddrString(pSMTPS->SockInfo, szAddr, sizeof(szAddr) - 1);
+		return SysStrDup(szAddr);
+	} else if (MemMatch(pszName, iSize, "REMOTEADDR", 10)) {
+		char szAddr[128] = "";
+
+		MscGetAddrString(pSMTPS->PeerInfo, szAddr, sizeof(szAddr) - 1);
+		return SysStrDup(szAddr);
+	} else if (MemMatch(pszName, iSize, "MSGREF", 6)) {
+
+		return SysStrDup(pSMTPS->szMessageID);
+	} else if (MemMatch(pszName, iSize, "USERAUTH", 8)) {
+
+		return SysStrDup(IsEmptyString(pSMTPS->szLogonUser) ?
+				 "-": pSMTPS->szLogonUser);
+	}
+
+	return SysStrDup("");
+}
+
+static int SMTPFilterMacroSubstitutes(char **ppszCmdTokens, SMTPSession &SMTPS)
+{
+	return MscReplaceTokens(ppszCmdTokens, SMTPMacroLkupProc, &SMTPS);
+}
+
+static char *SMTPGetFilterRejMessage(char const *pszMsgFilePath)
+{
+	FILE *pFile;
+	char szRejFilePath[SYS_MAX_PATH] = "";
+	char szRejMsg[512] = "";
+
+	SysSNPrintf(szRejFilePath, sizeof(szRejFilePath) - 1, "%s.rej", pszMsgFilePath);
+	if ((pFile = fopen(szRejFilePath, "rb")) == NULL)
+		return NULL;
+
+	MscFGets(szRejMsg, sizeof(szRejMsg) - 1, pFile);
+
+	fclose(pFile);
+	SysRemove(szRejFilePath);
+
+	return SysStrDup(szRejMsg);
+}
+
+static int SMTPLogFilter(SMTPSession &SMTPS, char const *const *ppszExec, int iExecResult,
+			 int iExitCode, char const *pszType, char const *pszInfo)
+{
+	FilterLogInfo FLI;
+
+	ZeroData(FLI);
+	FLI.pszSender = SMTPS.pszFrom != NULL ? SMTPS.pszFrom: "";
+	/*
+	 * In case we have multiple recipients, it is misleading to log only the
+	 * latest (or current) one, so we log "*" instead. But for post-RCPT
+	 * filters, it makes sense to log the current recipient for each filter
+	 * execution.
+	 */
+	if (SMTPS.pszRcpt != NULL)
+		FLI.pszRecipient = (SMTPS.iRcptCount == 1 ||
+				    strcmp(pszType, SMTP_POST_RCPT_FILTER) == 0) ? SMTPS.pszRcpt: "*";
+	else
+		FLI.pszRecipient = "";
+	FLI.LocalAddr = SMTPS.SockInfo;
+	FLI.RemoteAddr = SMTPS.PeerInfo;
+	FLI.ppszExec = ppszExec;
+	FLI.iExecResult = iExecResult;
+	FLI.iExitCode = iExitCode;
+	FLI.pszType = pszType;
+	FLI.pszInfo = pszInfo != NULL ? pszInfo: "";
+
+	return FilLogFilter(&FLI);
+}
+
+static int SMTPPreFilterExec(SMTPSession &SMTPS, FilterExecCtx *pFCtx,
+			     FilterTokens *pToks, char **ppszPEError)
+{
+	pFCtx->pToks = pToks;
+	pFCtx->pszAuthName = SMTPS.szLogonUser;
+	pFCtx->ulFlags = (SMTPS.ulFlags & SMTPF_WHITE_LISTED) ? FILTER_XFL_WHITELISTED: 0;
+	pFCtx->iTimeout = iFilterTimeout;
+
+	return FilExecPreParse(pFCtx, ppszPEError);
+}
+
+static int SMTPRunFilters(SMTPSession &SMTPS, char const *pszFilterPath, char const *pszType,
+			  char *&pszError)
+{
+	/* Share lock the filter file */
+	char szResLock[SYS_MAX_PATH] = "";
+	RLCK_HANDLE hResLock = RLckLockSH(CfgGetBasedPath(pszFilterPath, szResLock,
+							  sizeof(szResLock)));
+
+	if (hResLock == INVALID_RLCK_HANDLE)
+		return ErrGetErrorCode();
+
+	/* This should not happen but if it happens we let the message pass through */
+	FILE *pFiltFile = fopen(pszFilterPath, "rt");
+
+	if (pFiltFile == NULL) {
+		RLckUnlockSH(hResLock);
+		return 0;
+	}
+
+	/* Filter this message */
+	int iFieldsCount, iExitCode, iExitFlags, iExecResult;
+	char szFiltLine[1024] = "";
+
+	while (MscGetConfigLine(szFiltLine, sizeof(szFiltLine) - 1, pFiltFile) != NULL) {
+		char **ppszCmdTokens = StrGetTabLineStrings(szFiltLine);
+
+		if (ppszCmdTokens == NULL)
+			continue;
+
+		if ((iFieldsCount = StrStringsCount(ppszCmdTokens)) < 1) {
+			StrFreeStrings(ppszCmdTokens);
+			continue;
+		}
+
+		/* Perform pre-exec filtering (like exec exclude if authenticated, ...) */
+		char *pszPEError = NULL;
+		FilterExecCtx FCtx;
+		FilterTokens Toks;
+
+		ZeroData(FCtx);
+		Toks.ppszCmdTokens = ppszCmdTokens;
+		Toks.iTokenCount = iFieldsCount;
+
+		if (SMTPPreFilterExec(SMTPS, &FCtx, &Toks, &pszPEError) < 0) {
+			if (bFilterLogEnabled)
+				SMTPLogFilter(SMTPS, Toks.ppszCmdTokens, -1,
+					      -1, pszType, pszPEError);
+			SysFree(pszPEError);
+			StrFreeStrings(ppszCmdTokens);
+			continue;
+		}
+
+		/* Do filter line macro substitution */
+		SMTPFilterMacroSubstitutes(Toks.ppszCmdTokens, SMTPS);
+
+		iExitCode = -1;
+		iExitFlags = 0;
+		iExecResult = SysExec(Toks.ppszCmdTokens[0], &Toks.ppszCmdTokens[0],
+				      FCtx.iTimeout, SYS_PRIORITY_NORMAL, &iExitCode);
+
+		/* Log filter execution, if enabled */
+		if (bFilterLogEnabled)
+			SMTPLogFilter(SMTPS, Toks.ppszCmdTokens, iExecResult,
+				      iExitCode, pszType, NULL);
+
+		if (iExecResult == 0) {
+			SysLogMessage(LOG_LEV_MESSAGE,
+				      "SMTP filter run: Filter = \"%s\" Retcode = %d\n",
+				      Toks.ppszCmdTokens[0], iExitCode);
+
+			iExitFlags = iExitCode & SMTP_FILTER_FL_MASK;
+			iExitCode &= ~SMTP_FILTER_FL_MASK;
+
+			if (iExitCode == SMTP_FILTER_REJECT_CODE) {
+				StrFreeStrings(ppszCmdTokens);
+				fclose(pFiltFile);
+				RLckUnlockSH(hResLock);
+
+				char szLogLine[128];
+
+				SysSNPrintf(szLogLine, sizeof(szLogLine) - 1,
+					    "%s=EFILTER", SMTPGetFilterExtname(pszType));
+
+				if (SMTPLogEnabled(SMTPS.pThCfg->hThShb, SMTPS.pSMTPCfg))
+					SMTPLogSession(SMTPS, SMTPS.pszFrom != NULL ? SMTPS.pszFrom: "",
+						       SMTPS.pszRcpt != NULL ? SMTPS.pszRcpt: "",
+						       szLogLine, 0);
+
+				pszError = SMTPGetFilterRejMessage(SMTPS.szMsgFile);
+
+				ErrSetErrorCode(ERR_FILTERED_MESSAGE);
+				return ERR_FILTERED_MESSAGE;
+			}
+		} else {
+			SysLogMessage(LOG_LEV_ERROR,
+				      "SMTP filter error (%d): Filter = \"%s\"\n",
+				      iExecResult, Toks.ppszCmdTokens[0]);
+		}
+		StrFreeStrings(ppszCmdTokens);
+
+		if (iExitFlags & SMTP_FILTER_FL_BREAK)
+			break;
+	}
+	fclose(pFiltFile);
+	RLckUnlockSH(hResLock);
+
+	return 0;
+}
+
 static int SMTPDoIPBasedInit(SMTPSession &SMTPS, char *&pszSMTPError)
 {
 	int iErrorCode;
@@ -479,6 +703,18 @@ static int SMTPDoIPBasedInit(SMTPSession &SMTPS, char *&pszSMTPError)
 			SMTPS.ulFlags |= SMTPF_NORDNS_IP;
 		else
 			SMTPS.iCmdDelay = Max(SMTPS.iCmdDelay, -iCheckValue);
+	}
+
+	char szFilterFile[SYS_MAX_PATH] = "";
+
+	if (SMTPGetFilterFile(SMTP_POST_CONN_FILTER, szFilterFile, sizeof(szFilterFile) - 1)) {
+		if (SMTPRunFilters(SMTPS, szFilterFile, SMTP_POST_CONN_FILTER, pszSMTPError) < 0) {
+			ErrorPush();
+			if (pszSMTPError == NULL)
+				pszSMTPError = SysStrDup("501 Your IP smells funny");
+
+			return ErrorPop();
+		}
 	}
 
 	return 0;
@@ -1138,227 +1374,6 @@ static int SMTPCheckRelayCapability(SMTPSession &SMTPS, char const *pszDestDomai
 
 	/* IP based relay check */
 	return USmtpIsAllowedRelay(SMTPS.PeerInfo, SMTPS.hSvrConfig);
-}
-
-static int SMTPGetFilterFile(char const *pszFiltID, char *pszFileName, int iMaxName)
-{
-	char szMailRoot[SYS_MAX_PATH] = "";
-
-	CfgGetRootPath(szMailRoot, sizeof(szMailRoot));
-	SysSNPrintf(pszFileName, iMaxName - 1, "%sfilters.%s.tab", szMailRoot, pszFiltID);
-
-	return SysExistFile(pszFileName);
-}
-
-static char *SMTPMacroLkupProc(void *pPrivate, char const *pszName, int iSize)
-{
-	SMTPSession *pSMTPS = (SMTPSession *) pPrivate;
-
-	if (MemMatch(pszName, iSize, "FROM", 4)) {
-
-		return SysStrDup(pSMTPS->pszFrom != NULL ? pSMTPS->pszFrom: "-");
-	} else if (MemMatch(pszName, iSize, "CRCPT", 5)) {
-
-		return SysStrDup(pSMTPS->pszRcpt != NULL ? pSMTPS->pszRcpt: "-");
-	} else if (MemMatch(pszName, iSize, "RRCPT", 5)) {
-
-		return SysStrDup(pSMTPS->pszRealRcpt != NULL ?
-				 pSMTPS->pszRealRcpt: pSMTPS->pszRcpt != NULL ?
-				 pSMTPS->pszRcpt: "-");
-	} else if (MemMatch(pszName, iSize, "FILE", 4)) {
-
-		return SysStrDup(pSMTPS->szMsgFile);
-	} else if (MemMatch(pszName, iSize, "LOCALADDR", 9)) {
-		char szAddr[128] = "";
-
-		MscGetAddrString(pSMTPS->SockInfo, szAddr, sizeof(szAddr) - 1);
-		return SysStrDup(szAddr);
-	} else if (MemMatch(pszName, iSize, "REMOTEADDR", 10)) {
-		char szAddr[128] = "";
-
-		MscGetAddrString(pSMTPS->PeerInfo, szAddr, sizeof(szAddr) - 1);
-		return SysStrDup(szAddr);
-	} else if (MemMatch(pszName, iSize, "MSGREF", 6)) {
-
-		return SysStrDup(pSMTPS->szMessageID);
-	} else if (MemMatch(pszName, iSize, "USERAUTH", 8)) {
-
-		return SysStrDup(IsEmptyString(pSMTPS->szLogonUser) ?
-				 "-": pSMTPS->szLogonUser);
-	}
-
-	return SysStrDup("");
-}
-
-static int SMTPFilterMacroSubstitutes(char **ppszCmdTokens, SMTPSession &SMTPS)
-{
-	return MscReplaceTokens(ppszCmdTokens, SMTPMacroLkupProc, &SMTPS);
-}
-
-static char *SMTPGetFilterRejMessage(char const *pszMsgFilePath)
-{
-	FILE *pFile;
-	char szRejFilePath[SYS_MAX_PATH] = "";
-	char szRejMsg[512] = "";
-
-	SysSNPrintf(szRejFilePath, sizeof(szRejFilePath) - 1, "%s.rej", pszMsgFilePath);
-	if ((pFile = fopen(szRejFilePath, "rb")) == NULL)
-		return NULL;
-
-	MscFGets(szRejMsg, sizeof(szRejMsg) - 1, pFile);
-
-	fclose(pFile);
-	SysRemove(szRejFilePath);
-
-	return SysStrDup(szRejMsg);
-}
-
-static int SMTPLogFilter(SMTPSession &SMTPS, char const *const *ppszExec, int iExecResult,
-			 int iExitCode, char const *pszType, char const *pszInfo)
-{
-	FilterLogInfo FLI;
-
-	ZeroData(FLI);
-	FLI.pszSender = SMTPS.pszFrom != NULL ? SMTPS.pszFrom: "";
-	/*
-	 * In case we have multiple recipients, it is misleading to log only the
-	 * latest (or current) one, so we log "*" instead. But for post-RCPT
-	 * filters, it makes sense to log the current recipient for each filter
-	 * execution.
-	 */
-	if (SMTPS.pszRcpt != NULL)
-		FLI.pszRecipient = (SMTPS.iRcptCount == 1 ||
-				    strcmp(pszType, SMTP_POST_RCPT_FILTER) == 0) ? SMTPS.pszRcpt: "*";
-	else
-		FLI.pszRecipient = "";
-	FLI.LocalAddr = SMTPS.SockInfo;
-	FLI.RemoteAddr = SMTPS.PeerInfo;
-	FLI.ppszExec = ppszExec;
-	FLI.iExecResult = iExecResult;
-	FLI.iExitCode = iExitCode;
-	FLI.pszType = pszType;
-	FLI.pszInfo = pszInfo != NULL ? pszInfo: "";
-
-	return FilLogFilter(&FLI);
-}
-
-static int SMTPPreFilterExec(SMTPSession &SMTPS, FilterExecCtx *pFCtx,
-			     FilterTokens *pToks, char **ppszPEError)
-{
-	pFCtx->pToks = pToks;
-	pFCtx->pszAuthName = SMTPS.szLogonUser;
-	pFCtx->ulFlags = (SMTPS.ulFlags & SMTPF_WHITE_LISTED) ? FILTER_XFL_WHITELISTED: 0;
-	pFCtx->iTimeout = iFilterTimeout;
-
-	return FilExecPreParse(pFCtx, ppszPEError);
-}
-
-static int SMTPRunFilters(SMTPSession &SMTPS, char const *pszFilterPath, char const *pszType,
-			  char *&pszError)
-{
-	/* Share lock the filter file */
-	char szResLock[SYS_MAX_PATH] = "";
-	RLCK_HANDLE hResLock = RLckLockSH(CfgGetBasedPath(pszFilterPath, szResLock,
-							  sizeof(szResLock)));
-
-	if (hResLock == INVALID_RLCK_HANDLE)
-		return ErrGetErrorCode();
-
-	/* This should not happen but if it happens we let the message pass through */
-	FILE *pFiltFile = fopen(pszFilterPath, "rt");
-
-	if (pFiltFile == NULL) {
-		RLckUnlockSH(hResLock);
-		return 0;
-	}
-
-	/* Filter this message */
-	int iFieldsCount, iExitCode, iExitFlags, iExecResult;
-	char szFiltLine[1024] = "";
-
-	while (MscGetConfigLine(szFiltLine, sizeof(szFiltLine) - 1, pFiltFile) != NULL) {
-		char **ppszCmdTokens = StrGetTabLineStrings(szFiltLine);
-
-		if (ppszCmdTokens == NULL)
-			continue;
-
-		if ((iFieldsCount = StrStringsCount(ppszCmdTokens)) < 1) {
-			StrFreeStrings(ppszCmdTokens);
-			continue;
-		}
-
-		/* Perform pre-exec filtering (like exec exclude if authenticated, ...) */
-		char *pszPEError = NULL;
-		FilterExecCtx FCtx;
-		FilterTokens Toks;
-
-		ZeroData(FCtx);
-		Toks.ppszCmdTokens = ppszCmdTokens;
-		Toks.iTokenCount = iFieldsCount;
-
-		if (SMTPPreFilterExec(SMTPS, &FCtx, &Toks, &pszPEError) < 0) {
-			if (bFilterLogEnabled)
-				SMTPLogFilter(SMTPS, Toks.ppszCmdTokens, -1,
-					      -1, pszType, pszPEError);
-			SysFree(pszPEError);
-			StrFreeStrings(ppszCmdTokens);
-			continue;
-		}
-
-		/* Do filter line macro substitution */
-		SMTPFilterMacroSubstitutes(Toks.ppszCmdTokens, SMTPS);
-
-		iExitCode = -1;
-		iExitFlags = 0;
-		iExecResult = SysExec(Toks.ppszCmdTokens[0], &Toks.ppszCmdTokens[0],
-				      FCtx.iTimeout, SYS_PRIORITY_NORMAL, &iExitCode);
-
-		/* Log filter execution, if enabled */
-		if (bFilterLogEnabled)
-			SMTPLogFilter(SMTPS, Toks.ppszCmdTokens, iExecResult,
-				      iExitCode, pszType, NULL);
-
-		if (iExecResult == 0) {
-			SysLogMessage(LOG_LEV_MESSAGE,
-				      "SMTP filter run: Filter = \"%s\" Retcode = %d\n",
-				      Toks.ppszCmdTokens[0], iExitCode);
-
-			iExitFlags = iExitCode & SMTP_FILTER_FL_MASK;
-			iExitCode &= ~SMTP_FILTER_FL_MASK;
-
-			if (iExitCode == SMTP_FILTER_REJECT_CODE) {
-				StrFreeStrings(ppszCmdTokens);
-				fclose(pFiltFile);
-				RLckUnlockSH(hResLock);
-
-				char szLogLine[128];
-
-				SysSNPrintf(szLogLine, sizeof(szLogLine) - 1,
-					    "%s=EFILTER", SMTPGetFilterExtname(pszType));
-
-				if (SMTPLogEnabled(SMTPS.pThCfg->hThShb, SMTPS.pSMTPCfg))
-					SMTPLogSession(SMTPS, SMTPS.pszFrom, SMTPS.pszRcpt,
-						       szLogLine, 0);
-
-				pszError = SMTPGetFilterRejMessage(SMTPS.szMsgFile);
-
-				ErrSetErrorCode(ERR_FILTERED_MESSAGE);
-				return ERR_FILTERED_MESSAGE;
-			}
-		} else {
-			SysLogMessage(LOG_LEV_ERROR,
-				      "SMTP filter error (%d): Filter = \"%s\"\n",
-				      iExecResult, Toks.ppszCmdTokens[0]);
-		}
-		StrFreeStrings(ppszCmdTokens);
-
-		if (iExitFlags & SMTP_FILTER_FL_BREAK)
-			break;
-	}
-	fclose(pFiltFile);
-	RLckUnlockSH(hResLock);
-
-	return 0;
 }
 
 static int SMTPFilterMessage(SMTPSession &SMTPS, char const *pszFiltID, char *&pszError)
@@ -3293,4 +3308,3 @@ unsigned int SMTPClientThread(void *pThreadData)
 
 	return 0;
 }
-

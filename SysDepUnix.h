@@ -83,7 +83,6 @@ union FilledDirent {
 struct FileFindData {
 	char szPath[SYS_MAX_PATH];
 	DIR *pDIR;
-	FilledDirent FDE;
 	struct stat FStat;
 };
 
@@ -111,4 +110,3 @@ int SysEventfdSet(SYS_EVENTFD hEventfd);
 int SysEventfdReset(SYS_EVENTFD hEventfd);
 
 #endif
-

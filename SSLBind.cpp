@@ -64,24 +64,8 @@ static void BSslLockingCB(int iMode, int iType, const char *pszFile, int iLine)
 	}
 }
 
-static void BSslThreadExit(void *pPrivate, SYS_THREAD ThreadID, int iMode)
-{
-	if (iMode == SYS_THREAD_DETACH) {
-		/*
-		 * This needs to be called at every thread exit, in order to give
-		 * a chance to OpenSSL to free its internal state. We do not need
-		 * to call ERR_remove_state() if ThreadID is SYS_INVALID_THREAD,
-		 * since in such case we would be called from the main thread,
-		 * and BSslCleanup() (in BSslFreeOSSL()) takes care of that.
-		 */
-		if (ThreadID != SYS_INVALID_THREAD)
-			ERR_remove_state(0);
-	}
-}
-
 static void BSslFreeOSSL(void)
 {
-	ERR_remove_state(0);
 #ifndef OPENSSL_NO_ENGINE
 	ENGINE_cleanup();
 #endif
@@ -109,7 +93,6 @@ int BSslInit(void)
 	SSLeay_add_ssl_algorithms();
 	CRYPTO_set_id_callback(SysGetCurrentThreadId);
 	CRYPTO_set_locking_callback(BSslLockingCB);
-	SysAddThreadExitHook(BSslThreadExit, NULL);
 
 	return 0;
 }
@@ -565,4 +548,3 @@ int BSslBindServer(BSOCK_HANDLE hBSock, SslServerBind const *pSSLB,
 
 	return 0;
 }
-

@@ -1,37 +1,37 @@
 
 !IF "$(CFG)" == ""
 CFG=debug
-!ENDIF 
+!ENDIF
 
 !IF "$(CFG)" != "release" && "$(CFG)" != "debug"
 !MESSAGE Invalid configuration "$(CFG)" specified.
 !MESSAGE You can specify a configuration when running NMAKE
 !MESSAGE by defining the macro CFG on the command line. For example:
-!MESSAGE 
+!MESSAGE
 !MESSAGE nmake /f makefile CFG=debug
-!MESSAGE 
+!MESSAGE
 !MESSAGE Possible choices for configuration are:
-!MESSAGE 
+!MESSAGE
 !MESSAGE "release" ( Win32 x86 release build )
 !MESSAGE "debug"   ( Win32 x86 debug build)
-!MESSAGE 
+!MESSAGE
 !ERROR An invalid configuration is specified.
-!ENDIF 
+!ENDIF
 
 
 !IF "$(OS)" == "Windows_NT"
 NULL=
-!ELSE 
+!ELSE
 NULL=nul
 !ENDIF
 
 
 SRC_DIR=.
 
-INCL_DIRS=/I"$(SRC_DIR)" /I"$(SRC_DIR)\win32ssl\include"
+INCL_DIRS=/I"$(SRC_DIR)" /I"$(SRC_DIR)\win64ssl\include"
 
-LIBPATH=/libpath:"$(SRC_DIR)\win32ssl\lib"
-LIBS=libeay32.lib ssleay32.lib
+LIBPATH=/libpath:"$(SRC_DIR)\win64ssl\lib"
+LIBS=libcrypto_static.lib libssl_static.lib
 
 CPP_DEFS=/nologo /D "XMAIL_OS=Win32" /D _CRT_SECURE_NO_DEPRECATE /D _CRT_NONSTDC_NO_DEPRECATE
 
@@ -141,7 +141,7 @@ SENDMAIL_OBJS= \
 ALL : "$(OUTDIR)\$(XMAIL_TARGET).exe" "$(OUTDIR)\$(XMCRYPT_TARGET).exe" \
 	"$(OUTDIR)\$(MKUSERS_TARGET).exe" "$(OUTDIR)\$(CTRLCLNT_TARGET).exe" \
 	"$(OUTDIR)\$(SENDMAIL_TARGET).exe"
-	
+
 
 CLEAN :
 	-@erase "$(OUTDIR)\$(XMAIL_TARGET).exe" $(XMAIL_OBJS)
@@ -183,12 +183,10 @@ CLEAN :
 
 {$(SRC_DIR)}.c{$(OUTDIR)}.obj::
    $(CPP) @<<
-   $(CPP_FLAGS) $< 
+   $(CPP_FLAGS) $<
 <<
 
 {$(SRC_DIR)}.cpp{$(OUTDIR)}.obj::
    $(CPP) @<<
-   $(CPP_FLAGS) $< 
+   $(CPP_FLAGS) $<
 <<
-
-
