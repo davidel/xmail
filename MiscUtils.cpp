@@ -1274,12 +1274,12 @@ int MscCramMD5(char const *pszSecret, char const *pszChallenge, char *pszDigest)
  *       If this function gets changed in any way, the TAB_INDEX_CURR_VERSION
  *       value in TabIndex.cpp must be bumped to reflect a different file format.
  */
-unsigned long MscHashString(char const *pszBuffer, size_t iLength, unsigned long ulHashInit)
+unsigned long MscHashString(char const *pszBuffer, size_t sLength, unsigned long ulHashInit)
 {
 	unsigned long ulHashVal = ulHashInit;
 
-	while (iLength > 0) {
-		--iLength;
+	while (sLength > 0) {
+		--sLength;
 		ulHashVal += *(unsigned char const *) pszBuffer++;
 		ulHashVal += (ulHashVal << 10);
 		ulHashVal ^= (ulHashVal >> 6);

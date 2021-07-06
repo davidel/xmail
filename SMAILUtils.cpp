@@ -369,13 +369,14 @@ static void USmlFreeData(SpoolFileData *pSFD)
 
 char *USmlAddrConcat(char const *const *ppszStrings)
 {
-	int i, iSumLength;
+	int i;
+	size_t sSumLength = 0;
 	int iStrCount = StrStringsCount(ppszStrings);
 
-	for (i = iSumLength = 0; i < iStrCount; i++)
-		iSumLength += strlen(ppszStrings[i]) + 1;
+	for (i = 0; i < iStrCount; i++)
+		sSumLength += strlen(ppszStrings[i]) + 1;
 
-	char *pszConcat = (char *) SysAlloc(iSumLength + 1);
+	char *pszConcat = (char *) SysAlloc(sSumLength + 1);
 
 	if (pszConcat != NULL) {
 		SetEmptyString(pszConcat);
@@ -402,12 +403,13 @@ char *USmlBuildSendMailFrom(char const *const *ppszFrom, char const *const *ppsz
 	if (iRcptCount == 1)
 		return USmlAddrConcat(ppszFrom);
 
-	int i, iSumLength = strlen(ppszRcpt[0]) + 1;
+	size_t sSumLength = strlen(ppszRcpt[0]) + 1;
+	int i;
 
 	for (i = 0; i < iFromCount; i++)
-		iSumLength += strlen(ppszFrom[i]) + 1;
+		sSumLength += strlen(ppszFrom[i]) + 1;
 
-	char *pszConcat = (char *) SysAlloc(iSumLength + 1);
+	char *pszConcat = (char *) SysAlloc(sSumLength + 1);
 
 	if (pszConcat == NULL)
 		return NULL;
@@ -435,12 +437,12 @@ char *USmlBuildSendRcptTo(char const *const *ppszFrom, char const *const *ppszRc
 		return USmlAddrConcat(ppszRcpt);
 
 	int i;
-	int iSumLength = 0;
+	size_t sSumLength = 0;
 
 	for (i = 1; i < iRcptCount; i++)
-		iSumLength += strlen(ppszRcpt[i]) + 1;
+		sSumLength += strlen(ppszRcpt[i]) + 1;
 
-	char *pszConcat = (char *) SysAlloc(iSumLength + 1);
+	char *pszConcat = (char *) SysAlloc(sSumLength + 1);
 
 	if (pszConcat == NULL)
 		return NULL;
@@ -2736,4 +2738,3 @@ int USmlMessageAuth(SPLF_HANDLE hFSpool, char *pszAuthName, int iSize)
 	ErrSetErrorCode(ERR_NO_MESSAGE_AUTH);
 	return ERR_NO_MESSAGE_AUTH;
 }
-

@@ -71,17 +71,17 @@ int SysSendFile(SYS_SOCKET SockFD, char const *pszFileName, SYS_OFF_T llBaseOffs
 	setsockopt((int) SockFD, SOL_SOCKET, SO_SNDTIMEO, &newTV, sizeof(newTV));
 
 	/* Send the file */
-	size_t iSndBuffSize = MIN_TCP_SEND_SIZE;
+	size_t sSndBuffSize = MIN_TCP_SEND_SIZE;
 	time_t tStart;
 
 	while (llBaseOffset < llEndOffset) {
-		size_t iCurrSend = (size_t) Min((SYS_OFF_T) iSndBuffSize, llEndOffset - llBaseOffset);
+		size_t sCurrSend = (size_t) Min((SYS_OFF_T) sSndBuffSize, llEndOffset - llBaseOffset);
 		off_t ulStartOffset = (off_t) llBaseOffset;
 
 		tStart = time(NULL);
-		size_t iSendSize = sendfile((int) SockFD, iFileID, &ulStartOffset, iCurrSend);
+		size_t sSendSize = sendfile((int) SockFD, iFileID, &ulStartOffset, sCurrSend);
 
-		if (iSendSize != iCurrSend) {
+		if (sSendSize != sCurrSend) {
 			setsockopt((int) SockFD, SOL_SOCKET, SO_SNDTIMEO, &oldTV, sizeof(oldTV));
 			close(iFileID);
 			ErrSetErrorCode(ERR_SENDFILE);
@@ -89,10 +89,10 @@ int SysSendFile(SYS_SOCKET SockFD, char const *pszFileName, SYS_OFF_T llBaseOffs
 		}
 
 		if ((((time(NULL) - tStart) * K_IO_TIME_RATIO) < iTimeout) &&
-		    (iSndBuffSize < MAX_TCP_SEND_SIZE))
-			iSndBuffSize = Min(iSndBuffSize * 2, MAX_TCP_SEND_SIZE);
+		    (sSndBuffSize < MAX_TCP_SEND_SIZE))
+			sSndBuffSize = Min(sSndBuffSize * 2, MAX_TCP_SEND_SIZE);
 
-		llBaseOffset += iCurrSend;
+		llBaseOffset += sCurrSend;
 	}
 	setsockopt((int) SockFD, SOL_SOCKET, SO_SNDTIMEO, &oldTV, sizeof(oldTV));
 	close(iFileID);
@@ -182,4 +182,3 @@ int SysMemoryInfo(SYS_INT64 *pRamTotal, SYS_INT64 *pRamFree,
 
 	return 0;
 }
-

@@ -91,29 +91,29 @@
 
 
 
-inline char *StrNCat(char *pszDest, char const *pszSrc, size_t iMaxSize)
+inline char *StrNCat(char *pszDest, char const *pszSrc, size_t sMaxSize)
 {
-	size_t iDestLength = strlen(pszDest);
+	size_t sDestLength = strlen(pszDest);
 
-	if (iDestLength < iMaxSize)
-		StrNCpy(pszDest + iDestLength, pszSrc, iMaxSize - iDestLength);
+	if (sDestLength < sMaxSize)
+		StrNCpy(pszDest + sDestLength, pszSrc, sMaxSize - sDestLength);
 
 	return pszDest;
 }
 
-inline int StrNCmdMatch(char const *pszCmdLine, char const *pszCmd, size_t iCmdLength)
+inline int StrNCmdMatch(char const *pszCmdLine, char const *pszCmd, size_t sCmdLength)
 {
-	return strnicmp(pszCmdLine, pszCmd, iCmdLength) == 0 &&
-		(pszCmdLine[iCmdLength] == '\0' || strchr(" \r\n\t", pszCmdLine[iCmdLength]) != NULL);
+	return strnicmp(pszCmdLine, pszCmd, sCmdLength) == 0 &&
+		(pszCmdLine[sCmdLength] == '\0' || strchr(" \r\n\t", pszCmdLine[sCmdLength]) != NULL);
 }
 
 inline char *AppendChar(char *pszString, int iChar)
 {
-	size_t iStrLength = strlen(pszString);
+	size_t sStrLength = strlen(pszString);
 
-	if (iStrLength == 0 || pszString[iStrLength - 1] != iChar) {
-		pszString[iStrLength] = iChar;
-		pszString[iStrLength + 1] = '\0';
+	if (sStrLength == 0 || pszString[sStrLength - 1] != iChar) {
+		pszString[sStrLength] = iChar;
+		pszString[sStrLength + 1] = '\0';
 	}
 
 	return pszString;
@@ -126,10 +126,10 @@ inline char *AppendSlash(char *pszPath)
 
 inline char *DelFinalChar(char *pszString, int iChar)
 {
-	size_t iStrLength = strlen(pszString);
+	size_t sStrLength = strlen(pszString);
 
-	if (iStrLength > 0 && pszString[iStrLength - 1] == iChar)
-		pszString[iStrLength - 1] = '\0';
+	if (sStrLength > 0 && pszString[sStrLength - 1] == iChar)
+		pszString[sStrLength - 1] = '\0';
 
 	return pszString;
 }
@@ -168,11 +168,11 @@ inline int IsPrimeNumber(long lNumber)
 
 inline char *ClearEOL(char *pszBuffer)
 {
-	size_t iSize = strlen(pszBuffer);
+	size_t sSize = strlen(pszBuffer);
 
-	for (; iSize > 0 && (pszBuffer[iSize - 1] == '\r' || pszBuffer[iSize - 1] == '\n');
-	     iSize--);
-	pszBuffer[iSize] = '\0';
+	for (; sSize > 0 && (pszBuffer[sSize - 1] == '\r' || pszBuffer[sSize - 1] == '\n');
+	     sSize--);
+	pszBuffer[sSize] = '\0';
 
 	return pszBuffer;
 }

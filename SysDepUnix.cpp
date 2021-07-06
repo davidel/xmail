@@ -1383,9 +1383,9 @@ void SysThreadOnce(SYS_THREAD_ONCE *pThrOnce, void (*pOnceProc) (void))
 	pthread_once(pThrOnce, pOnceProc);
 }
 
-void *SysAllocNZ(unsigned int uSize)
+void *SysAllocNZ(size_t sSize)
 {
-	void *pData = malloc(uSize);
+	void *pData = malloc(sSize);
 
 	if (pData == NULL)
 		ErrSetErrorCode(ERR_MEMORY);
@@ -1393,12 +1393,12 @@ void *SysAllocNZ(unsigned int uSize)
 	return pData;
 }
 
-void *SysAlloc(unsigned int uSize)
+void *SysAlloc(size_t sSize)
 {
-	void *pData = SysAllocNZ(uSize);
+	void *pData = SysAllocNZ(sSize);
 
 	if (pData != NULL)
-		memset(pData, 0, uSize);
+		memset(pData, 0, sSize);
 
 	return pData;
 }
@@ -1408,9 +1408,9 @@ void SysFree(void *pData)
 	free(pData);
 }
 
-void *SysRealloc(void *pData, unsigned int uSize)
+void *SysRealloc(void *pData, size_t sSize)
 {
-	void *pNewData = realloc(pData, uSize);
+	void *pNewData = realloc(pData, sSize);
 
 	if (pNewData == NULL)
 		ErrSetErrorCode(ERR_MEMORY);
