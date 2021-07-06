@@ -444,7 +444,7 @@ int BSslBindClient(BSOCK_HANDLE hBSock, SslServerBind const *pSSLB,
 	 * We want blocking sockets during the initial SSL negotiation.
 	 */
 	SysBlockSocket(SockFD, 1);
-	SSL_set_fd(pSSL, SockFD);
+	SSL_set_fd(pSSL, (int) SockFD);
 	if (SSL_connect(pSSL) == -1) {
 		SysBlockSocket(SockFD, -1);
 		SSL_free(pSSL);
@@ -514,7 +514,7 @@ int BSslBindServer(BSOCK_HANDLE hBSock, SslServerBind const *pSSLB,
 	 * We want blocking sockets during the initial SSL negotiation.
 	 */
 	SysBlockSocket(SockFD, 1);
-	SSL_set_fd(pSSL, SockFD);
+	SSL_set_fd(pSSL, (int) SockFD);
 	if (SSL_accept(pSSL) == -1) {
 		SysBlockSocket(SockFD, -1);
 		SSL_free(pSSL);

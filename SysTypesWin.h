@@ -89,7 +89,7 @@ typedef signed int SYS_INT32;
 typedef unsigned int SYS_UINT32;
 typedef signed __int64 SYS_INT64;
 typedef unsigned __int64 SYS_UINT64;
-typedef unsigned long SYS_HANDLE;
+typedef size_t SYS_HANDLE;
 typedef int SYS_TLSKEY;
 typedef SOCKET SYS_SOCKET;
 typedef int socklen_t;
@@ -97,7 +97,7 @@ typedef HANDLE SYS_SEMAPHORE;
 typedef HANDLE SYS_MUTEX;
 typedef HANDLE SYS_EVENT;
 typedef HANDLE SYS_PEVENT;
-typedef unsigned long SYS_THREAD;
+typedef size_t SYS_THREAD;
 typedef void *SYS_MMAP;
 typedef SYS_INT64 SYS_OFF_T;
 typedef long SYS_SIZE_T;
@@ -108,4 +108,3 @@ struct SYS_THREAD_ONCE {
 };
 
 #endif
-
