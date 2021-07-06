@@ -88,18 +88,18 @@ static int BSckSock_Free(void *pPrivate)
 
 static int BSckSock_Read(void *pPrivate, void *pData, int iSize, int iTimeout)
 {
-	return SysRecvData((SYS_SOCKET) (long) pPrivate, (char *) pData, iSize, iTimeout);
+	return SysRecvData((SYS_SOCKET) (size_t) pPrivate, (char *) pData, iSize, iTimeout);
 }
 
 static int BSckSock_Write(void *pPrivate, void const *pData, int iSize, int iTimeout)
 {
-	return SysSendData((SYS_SOCKET) (long) pPrivate, (char const *) pData, iSize, iTimeout);
+	return SysSendData((SYS_SOCKET) (size_t) pPrivate, (char const *) pData, iSize, iTimeout);
 }
 
 static int BSckSock_SendFile(void *pPrivate, char const *pszFilePath, SYS_OFF_T llBaseOffset,
 			     SYS_OFF_T llEndOffset, int iTimeout)
 {
-	return SysSendFile((SYS_SOCKET) (long) pPrivate, pszFilePath, llBaseOffset,
+	return SysSendFile((SYS_SOCKET) (size_t) pPrivate, pszFilePath, llBaseOffset,
 			   llEndOffset, iTimeout);
 }
 
@@ -122,7 +122,7 @@ BSOCK_HANDLE BSckAttach(SYS_SOCKET SockFD, int iBufferSize)
 	pBSD->pszBuffer = pszBuffer;
 	pBSD->iBytesInBuffer = 0;
 	pBSD->iReadIndex = 0;
-	pBSD->IOops.pPrivate = (void *) (long) SockFD;
+	pBSD->IOops.pPrivate = (void *) (size_t) SockFD;
 	pBSD->IOops.pName = BSckSock_Name;
 	pBSD->IOops.pFree = BSckSock_Free;
 	pBSD->IOops.pRead = BSckSock_Read;
@@ -415,4 +415,3 @@ char *BSckBufferGet(BSOCK_HANDLE hBSock, BSockLineBuffer *pBLB, int iTimeout, in
 
 	return pBLB->pszBuffer;
 }
-

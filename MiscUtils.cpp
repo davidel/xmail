@@ -1274,7 +1274,7 @@ int MscCramMD5(char const *pszSecret, char const *pszChallenge, char *pszDigest)
  *       If this function gets changed in any way, the TAB_INDEX_CURR_VERSION
  *       value in TabIndex.cpp must be bumped to reflect a different file format.
  */
-unsigned long MscHashString(char const *pszBuffer, int iLength, unsigned long ulHashInit)
+unsigned long MscHashString(char const *pszBuffer, size_t iLength, unsigned long ulHashInit)
 {
 	unsigned long ulHashVal = ulHashInit;
 
@@ -1580,4 +1580,3 @@ int MscStringCompareCB(void *pPrivate, HashDatum const *pDatum1,
 {
 	return strcmp((char const *) pDatum1->pData, (char const *) pDatum2->pData);
 }
-

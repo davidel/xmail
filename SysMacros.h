@@ -168,7 +168,7 @@ inline int IsPrimeNumber(long lNumber)
 
 inline char *ClearEOL(char *pszBuffer)
 {
-	int iSize = strlen(pszBuffer);
+	size_t iSize = strlen(pszBuffer);
 
 	for (; iSize > 0 && (pszBuffer[iSize - 1] == '\r' || pszBuffer[iSize - 1] == '\n');
 	     iSize--);

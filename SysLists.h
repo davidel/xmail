@@ -80,7 +80,7 @@
 		}							\
 	} while (0)
 
-#define SYS_LIST_ENTRY(ptr, type, member)   ((type *)((char *)(ptr)-(unsigned long)(&((type *)0)->member)))
+#define SYS_LIST_ENTRY(ptr, type, member)   ((type *)((char *)(ptr)-(size_t)(&((type *)0)->member)))
 
 #define SYS_LIST_FOR_EACH(pos, head)        for (pos = (head)->pNext; pos != (head); pos = (pos)->pNext)
 
