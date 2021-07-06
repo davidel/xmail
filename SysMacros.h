@@ -91,9 +91,9 @@
 
 
 
-inline char *StrNCat(char *pszDest, char const *pszSrc, int iMaxSize)
+inline char *StrNCat(char *pszDest, char const *pszSrc, size_t iMaxSize)
 {
-	int iDestLength = strlen(pszDest);
+	size_t iDestLength = strlen(pszDest);
 
 	if (iDestLength < iMaxSize)
 		StrNCpy(pszDest + iDestLength, pszSrc, iMaxSize - iDestLength);
@@ -101,7 +101,7 @@ inline char *StrNCat(char *pszDest, char const *pszSrc, int iMaxSize)
 	return pszDest;
 }
 
-inline int StrNCmdMatch(char const *pszCmdLine, char const *pszCmd, int iCmdLength)
+inline int StrNCmdMatch(char const *pszCmdLine, char const *pszCmd, size_t iCmdLength)
 {
 	return strnicmp(pszCmdLine, pszCmd, iCmdLength) == 0 &&
 		(pszCmdLine[iCmdLength] == '\0' || strchr(" \r\n\t", pszCmdLine[iCmdLength]) != NULL);
@@ -109,7 +109,7 @@ inline int StrNCmdMatch(char const *pszCmdLine, char const *pszCmd, int iCmdLeng
 
 inline char *AppendChar(char *pszString, int iChar)
 {
-	int iStrLength = strlen(pszString);
+	size_t iStrLength = strlen(pszString);
 
 	if (iStrLength == 0 || pszString[iStrLength - 1] != iChar) {
 		pszString[iStrLength] = iChar;
@@ -126,7 +126,7 @@ inline char *AppendSlash(char *pszPath)
 
 inline char *DelFinalChar(char *pszString, int iChar)
 {
-	int iStrLength = strlen(pszString);
+	size_t iStrLength = strlen(pszString);
 
 	if (iStrLength > 0 && pszString[iStrLength - 1] == iChar)
 		pszString[iStrLength - 1] = '\0';
@@ -178,4 +178,3 @@ inline char *ClearEOL(char *pszBuffer)
 }
 
 #endif
-
