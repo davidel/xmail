@@ -411,7 +411,7 @@ static ssize_t SysRecvLL(SYS_SOCKET SockFD, char *pszBuffer, size_t sBufferSize)
 	WSABUF WSABuff;
 
 	ZeroData(WSABuff);
-	WSABuff.len = sBufferSize;
+	WSABuff.len = (ULONG) sBufferSize;
 	WSABuff.buf = pszBuffer;
 
 	return WSARecv(SockFD, &WSABuff, 1, &dwRtxBytes, &dwRtxFlags, NULL, NULL) == 0 ?
@@ -424,7 +424,7 @@ static ssize_t SysSendLL(SYS_SOCKET SockFD, char const *pszBuffer, size_t sBuffe
 	WSABUF WSABuff;
 
 	ZeroData(WSABuff);
-	WSABuff.len = sBufferSize;
+	WSABuff.len = (ULONG) sBufferSize;
 	WSABuff.buf = (char *) pszBuffer;
 
 	return WSASend(SockFD, &WSABuff, 1, &dwRtxBytes, 0, NULL, NULL) == 0 ?
@@ -510,7 +510,7 @@ ssize_t SysRecvDataFrom(SYS_SOCKET SockFD, SYS_INET_ADDR *pFrom, char *pszBuffer
 	HANDLE hWaitEvents[2] = { hReadEvent, hShutdownEvent };
 
 	ZeroData(WSABuff);
-	WSABuff.len = sBufferSize;
+	WSABuff.len = (ULONG) sBufferSize;
 	WSABuff.buf = pszBuffer;
 
 	for (;;) {
@@ -605,7 +605,7 @@ ssize_t SysSendData(SYS_SOCKET SockFD, char const *pszBuffer, size_t sBufferSize
 ssize_t SysSend(SYS_SOCKET SockFD, char const *pszBuffer, size_t sBufferSize,
 		int iTimeout)
 {
-	ssize_t sRtxBytes = 0;
+	size_t sRtxBytes = 0;
 
 	while (sRtxBytes < sBufferSize) {
 		ssize_t iRtxCurrent = SysSendData(SockFD, pszBuffer + sRtxBytes,
@@ -634,7 +634,7 @@ ssize_t SysSendDataTo(SYS_SOCKET SockFD, const SYS_INET_ADDR *pTo,
 	HANDLE hWaitEvents[2] = { hWriteEvent, hShutdownEvent };
 
 	ZeroData(WSABuff);
-	WSABuff.len = sBufferSize;
+	WSABuff.len = (ULONG) sBufferSize;
 	WSABuff.buf = (char *) pszBuffer;
 
 	for (;;) {
@@ -836,10 +836,10 @@ int SysSendFile(SYS_SOCKET SockFD, char const *pszFileName, SYS_OFF_T llBaseOffs
 	SYS_INT64 tStart;
 
 	while (ullCurrOffset < ullEndOffset) {
-		int iCurrSend = (int) Min(iSndBuffSize, ullEndOffset - ullCurrOffset);
+		ssize_t sCurrSend = (ssize_t) Min(iSndBuffSize, ullEndOffset - ullCurrOffset);
 
 		tStart = SysMsTime();
-		if ((iCurrSend = SysSendData(SockFD, pszBuffer, iCurrSend, iTimeout)) < 0) {
+		if ((sCurrSend = SysSendData(SockFD, pszBuffer, sCurrSend, iTimeout)) < 0) {
 			ErrorPush();
 			UnmapViewOfFile(pAddress);
 			CloseHandle(hFileMap);
@@ -849,8 +849,8 @@ int SysSendFile(SYS_SOCKET SockFD, char const *pszFileName, SYS_OFF_T llBaseOffs
 		if (iSndBuffSize < MAX_TCP_SEND_SIZE &&
 		    ((SysMsTime() - tStart) * K_IO_TIME_RATIO) < (SYS_INT64) iTimeout)
 			iSndBuffSize = Min(iSndBuffSize * 2, MAX_TCP_SEND_SIZE);
-		pszBuffer += iCurrSend;
-		ullCurrOffset += (SYS_UINT64) iCurrSend;
+		pszBuffer += sCurrSend;
+		ullCurrOffset += (SYS_UINT64) sCurrSend;
 	}
 	UnmapViewOfFile(pAddress);
 	CloseHandle(hFileMap);

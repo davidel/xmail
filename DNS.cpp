@@ -319,7 +319,7 @@ static int DNS_RequestSetup(DNSQuery **ppDNSQ, unsigned int uOpCode,
 }
 
 static SYS_UINT8 *DNS_QuerySendStream(char const *pszDNSServer, int iPortNo, int iTimeout,
-				      DNSQuery const *pDNSQ, int iQLenght)
+				      DNSQuery const *pDNSQ, size_t sQLenght)
 {
 	/* Open DNS server socket */
 	SYS_SOCKET SockFD;
@@ -330,7 +330,7 @@ static SYS_UINT8 *DNS_QuerySendStream(char const *pszDNSServer, int iPortNo, int
 				  &SockAddr, iTimeout) < 0)
 		return NULL;
 
-	SYS_UINT16 QLenght = (SYS_UINT16) htons(iQLenght);
+	SYS_UINT16 QLenght = (SYS_UINT16) htons(sQLenght);
 
 	/* Send packet lenght */
 	if (SysSend(SockFD, (char *) &QLenght, sizeof(QLenght),
@@ -341,7 +341,7 @@ static SYS_UINT8 *DNS_QuerySendStream(char const *pszDNSServer, int iPortNo, int
 		return NULL;
 	}
 	/* Send packet */
-	if (SysSend(SockFD, (char const *) pDNSQ, iQLenght, iTimeout) != iQLenght) {
+	if (SysSend(SockFD, (char const *) pDNSQ, sQLenght, iTimeout) != sQLenght) {
 		ErrorPush();
 		SysCloseSocket(SockFD);
 		ErrSetErrorCode(ErrorFetch());
@@ -388,7 +388,7 @@ static SYS_UINT8 *DNS_QuerySendStream(char const *pszDNSServer, int iPortNo, int
 }
 
 static SYS_UINT8 *DNS_QuerySendDGram(char const *pszDNSServer, int iPortNo, int iTimeout,
-				     DNSQuery const *pDNSQ, int iQLenght, int *piTrunc)
+				     DNSQuery const *pDNSQ, size_t sQLenght, int *piTrunc)
 {
 	int i;
 	ssize_t sPktSize;
@@ -404,8 +404,8 @@ static SYS_UINT8 *DNS_QuerySendDGram(char const *pszDNSServer, int iPortNo, int 
 		return NULL;
 
 	for (i = 0; i < DNS_SEND_RETRIES; i++) {
-		if (SysSendData(SockFD, (char const *) pDNSQ, iQLenght,
-				iTimeout) != iQLenght)
+		if (SysSendData(SockFD, (char const *) pDNSQ, sQLenght,
+				iTimeout) != sQLenght)
 			continue;
 
 		ZeroData(RecvAddr);
