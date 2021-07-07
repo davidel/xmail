@@ -37,6 +37,7 @@
 #include <direct.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stddef.h>
 #include <process.h>
 #include <malloc.h>
 #include <ctype.h>
