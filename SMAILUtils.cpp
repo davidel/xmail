@@ -2299,7 +2299,7 @@ int USmlValidAddress(char const *pszAddress, char const *pszTop)
 }
 
 int USmlParseAddress(char const *pszAddress, char *pszPreAddr,
-		     int iMaxPreAddress, char *pszEmailAddr, int iMaxAddress)
+		     int iMaxPreAddress, char *pszEmailAddr, size_t sMaxAddress)
 {
 	StrSkipSpaces(pszAddress);
 	if (*pszAddress == '\0') {
@@ -2330,30 +2330,31 @@ int USmlParseAddress(char const *pszAddress, char *pszPreAddr,
 		if (USmlValidAddress(pszOpen + 1, pszClose) < 0)
 			return ErrGetErrorCode();
 		if (pszEmailAddr != NULL) {
-			int iEmailCount = (int) Min((pszClose - pszOpen) - 1, iMaxAddress - 1);
+			ssize_t sEmailCount = Min((pszClose - pszOpen) - 1,
+						  (ssize_t) sMaxAddress - 1);
 
-			if (iEmailCount < 0) {
+			if (sEmailCount < 0) {
 				ErrSetErrorCode(ERR_BAD_TAG_ADDRESS);
 				return ERR_BAD_TAG_ADDRESS;
 			}
-			strncpy(pszEmailAddr, pszOpen + 1, iEmailCount);
-			pszEmailAddr[iEmailCount] = '\0';
+			strncpy(pszEmailAddr, pszOpen + 1, sEmailCount);
+			pszEmailAddr[sEmailCount] = '\0';
 			StrTrim(pszEmailAddr, " \t");
 		}
 	} else {
-		int iAddrLen = strlen(pszAddress);
+		size_t sAddrLen = strlen(pszAddress);
 
-		if (iAddrLen == 0) {
+		if (sAddrLen == 0) {
 			ErrSetErrorCode(ERR_EMPTY_ADDRESS);
 			return ERR_EMPTY_ADDRESS;
 		}
-		if (USmlValidAddress(pszAddress, pszAddress + iAddrLen) < 0)
+		if (USmlValidAddress(pszAddress, pszAddress + sAddrLen) < 0)
 			return ErrGetErrorCode();
 		if (pszPreAddr != NULL)
 			SetEmptyString(pszPreAddr);
 		if (pszEmailAddr != NULL) {
-			strncpy(pszEmailAddr, pszAddress, iMaxAddress - 1);
-			pszEmailAddr[iMaxAddress - 1] = '\0';
+			strncpy(pszEmailAddr, pszAddress, sMaxAddress - 1);
+			pszEmailAddr[sMaxAddress - 1] = '\0';
 			StrTrim(pszEmailAddr, " \t");
 		}
 	}
@@ -2361,7 +2362,7 @@ int USmlParseAddress(char const *pszAddress, char *pszPreAddr,
 	return 0;
 }
 
-static int USmlExtractFromAddress(HSLIST &hTagList, char *pszFromAddr, int iMaxAddress)
+static int USmlExtractFromAddress(HSLIST &hTagList, char *pszFromAddr, size_t sMaxAddress)
 {
 	/* Try to discover the "Return-Path" ( or eventually "From" ) tag to setup */
 	/* the "MAIL FROM: <>" part of the spool message */
@@ -2369,13 +2370,13 @@ static int USmlExtractFromAddress(HSLIST &hTagList, char *pszFromAddr, int iMaxA
 	MessageTagData *pMTD = USmlFindTag(hTagList, "Return-Path", TagPosition);
 
 	if (pMTD != NULL &&
-	    USmlParseAddress(pMTD->pszTagData, NULL, 0, pszFromAddr, iMaxAddress) == 0)
+	    USmlParseAddress(pMTD->pszTagData, NULL, 0, pszFromAddr, sMaxAddress) == 0)
 		return 0;
 
 	TagPosition = TAG_POSITION_INIT;
 
 	if ((pMTD = USmlFindTag(hTagList, "From", TagPosition)) != NULL &&
-	    USmlParseAddress(pMTD->pszTagData, NULL, 0, pszFromAddr, iMaxAddress) == 0)
+	    USmlParseAddress(pMTD->pszTagData, NULL, 0, pszFromAddr, sMaxAddress) == 0)
 		return 0;
 
 	ErrSetErrorCode(ERR_MAILFROM_UNKNOWN);
@@ -2383,7 +2384,7 @@ static int USmlExtractFromAddress(HSLIST &hTagList, char *pszFromAddr, int iMaxA
 }
 
 static char const *USmlAddressFromAtPtr(char const *pszAt, char const *pszBase,
-					char *pszAddress, int iMaxAddress)
+					char *pszAddress, size_t sMaxAddress)
 {
 	char const *pszStart = pszAt;
 
@@ -2396,7 +2397,7 @@ static char const *USmlAddressFromAtPtr(char const *pszAt, char const *pszBase,
 
 	for (; (*pszEnd != '\0') && (strchr("<> \t,\":;'\r\n", *pszEnd) == NULL); pszEnd++);
 
-	int iAddrLength = Min((int) (pszEnd - pszStart), iMaxAddress - 1);
+	int iAddrLength = Min((int) (pszEnd - pszStart), sMaxAddress - 1);
 
 	Cpy2Sz(pszAddress, pszStart, iAddrLength);
 
@@ -2481,14 +2482,14 @@ BuildAddrList:
 	return ppszAddresses;
 }
 
-static int USmlExtractToAddress(HSLIST &hTagList, char *pszToAddr, int iMaxAddress)
+static int USmlExtractToAddress(HSLIST &hTagList, char *pszToAddr, size_t sMaxAddress)
 {
 	/* Try to extract the "To:" tag from the mail headers */
 	TAG_POSITION TagPosition = TAG_POSITION_INIT;
 	MessageTagData *pMTD = USmlFindTag(hTagList, "To", TagPosition);
 
 	if (pMTD == NULL ||
-	    USmlParseAddress(pMTD->pszTagData, NULL, 0, pszToAddr, iMaxAddress) < 0) {
+	    USmlParseAddress(pMTD->pszTagData, NULL, 0, pszToAddr, sMaxAddress) < 0) {
 		ErrSetErrorCode(ERR_RCPTTO_UNKNOWN);
 		return ERR_RCPTTO_UNKNOWN;
 	}

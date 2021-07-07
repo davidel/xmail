@@ -256,12 +256,12 @@ void md5_hex(unsigned char *src, char *dst)
 
 void do_md5_file(FILE *file, size_t start, size_t bytes, char *hash)
 {
-	int n;
+	ssize_t n;
 	md5_ctx_t ctx;
 	unsigned char buff[1024];
 
 	md5_init(&ctx);
-	fseek(file, start, SEEK_SET);
+	Sys_fseek(file, start, SEEK_SET);
 	while (bytes > 0) {
 		n = fread(buff, 1, Min(bytes, sizeof(buff)), file);
 		if (n <= 0)

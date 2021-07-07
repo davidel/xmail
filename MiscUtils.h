@@ -60,9 +60,9 @@ struct ThreadCreateCtx {
 };
 
 
-int MscDatumAlloc(Datum *pDm, void const *pData, long lSize);
-LstDatum *MscLstDatumAlloc(void const *pData, long lSize);
-int MscLstDatumAddT(SysListHead *pHead, void const *pData, long lSize);
+int MscDatumAlloc(Datum *pDm, void const *pData, size_t sSize);
+LstDatum *MscLstDatumAlloc(void const *pData, size_t sSize);
+int MscLstDatumAddT(SysListHead *pHead, void const *pData, size_t sSize);
 void MscFreeDatumList(SysListHead *pHead);
 int MscUniqueFile(char const *pszDir, char *pszFilePath, int iMaxPath);
 void MscSafeGetTmpFile(char *pszPath, int iMaxPath);
@@ -72,12 +72,12 @@ ssize_t MscSendTextFile(char const *pszFileName, BSOCK_HANDLE hBSock, int iTimeo
 			int (*pStopProc) (void *) = NULL, void *pParam = NULL);
 int MscSendFileCRLF(char const *pszFilePath, BSOCK_HANDLE hBSock, int iTimeout);
 char *MscTranslatePath(char *pszPath);
-void *MscLoadFile(char const *pszFilePath, unsigned long *pulFileSize);
+void *MscLoadFile(char const *pszFilePath, size_t *pFileSize);
 int MscLockFile(char const *pszFileName, int iMaxWait, int iWaitStep = LOCK_FILE_WAITSTEP);
 int MscGetTimeNbrString(char *pszTimeStr, int iStringSize, time_t tTime = 0);
 int MscGetTime(struct tm &tmLocal, int &iDiffHours, int &iDiffMins, time_t tCurr = 0);
 char *MscStrftime(struct tm const *ptmTime, char *pszDateStr, int iSize);
-int MscGetTimeStr(char *pszTimeStr, int iStringSize, time_t tCurr = 0);
+int MscGetTimeStr(char *pszTimeStr, size_t sStringSize, time_t tCurr = 0);
 int MscGetDirectorySize(char const *pszPath, bool bRecurse, SYS_OFF_T &llDirSize,
 			unsigned long &ulNumFiles, int (*pFNValidate) (char const *) = NULL);
 FSCAN_HANDLE MscFirstFile(char const *pszPath, int iListDirs, char *pszFileName, int iSize);

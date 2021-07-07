@@ -60,24 +60,24 @@ struct FileScan {
 };
 
 
-int MscDatumAlloc(Datum *pDm, void const *pData, long lSize)
+int MscDatumAlloc(Datum *pDm, void const *pData, size_t sSize)
 {
-	if ((pDm->pData = (char *) SysAllocNZ(lSize + 1)) == NULL)
+	if ((pDm->pData = (char *) SysAllocNZ(sSize + 1)) == NULL)
 		return ErrGetErrorCode();
-	memcpy(pDm->pData, pData, lSize);
-	pDm->pData[lSize] = 0;
-	pDm->lSize = lSize;
+	memcpy(pDm->pData, pData, sSize);
+	pDm->pData[sSize] = 0;
+	pDm->lSize = sSize;
 
 	return 0;
 }
 
-LstDatum *MscLstDatumAlloc(void const *pData, long lSize)
+LstDatum *MscLstDatumAlloc(void const *pData, size_t sSize)
 {
 	LstDatum *pLDm = (LstDatum *) SysAlloc(sizeof(LstDatum));
 
 	if (pLDm != NULL) {
 		SYS_INIT_LIST_HEAD(&pLDm->LLnk);
-		if (MscDatumAlloc(&pLDm->Data, pData, lSize) < 0) {
+		if (MscDatumAlloc(&pLDm->Data, pData, sSize) < 0) {
 			SysFree(pLDm);
 			return NULL;
 		}
@@ -86,9 +86,9 @@ LstDatum *MscLstDatumAlloc(void const *pData, long lSize)
 	return pLDm;
 }
 
-int MscLstDatumAddT(SysListHead *pHead, void const *pData, long lSize)
+int MscLstDatumAddT(SysListHead *pHead, void const *pData, size_t sSize)
 {
-	LstDatum *pLDm = MscLstDatumAlloc(pData, lSize);
+	LstDatum *pLDm = MscLstDatumAlloc(pData, sSize);
 
 	if (pLDm == NULL)
 		return ErrGetErrorCode();
@@ -270,7 +270,7 @@ char *MscTranslatePath(char *pszPath)
 	return pszPath;
 }
 
-void *MscLoadFile(char const *pszFilePath, unsigned long *pulFileSize)
+void *MscLoadFile(char const *pszFilePath, size_t *pFileSize)
 {
 	size_t FileSize, RdBytes;
 	SYS_OFF_T llFileSize;
@@ -307,8 +307,8 @@ void *MscLoadFile(char const *pszFilePath, unsigned long *pulFileSize)
 		return NULL;
 	}
 	((char *) pFileData)[FileSize] = 0;
-	if (pulFileSize != NULL)
-		*pulFileSize = FileSize;
+	if (pFileSize != NULL)
+		*pFileSize = FileSize;
 
 	return pFileData;
 }
@@ -385,7 +385,7 @@ char *MscStrftime(struct tm const *ptmTime, char *pszDateStr, int iSize)
 	return pszDateStr;
 }
 
-int MscGetTimeStr(char *pszTimeStr, int iStringSize, time_t tCurr)
+int MscGetTimeStr(char *pszTimeStr, size_t sStringSize, time_t tCurr)
 {
 	int iDiffHours = 0;
 	int iDiffMins = 0;
@@ -397,7 +397,7 @@ int MscGetTimeStr(char *pszTimeStr, int iStringSize, time_t tCurr)
 		sprintf(szDiffTime, " +%02d%02d", iDiffHours, iDiffMins);
 	else
 		sprintf(szDiffTime, " -%02d%02d", -iDiffHours, iDiffMins);
-	MscStrftime(&tmTime, pszTimeStr, iStringSize - strlen(szDiffTime) - 1);
+	MscStrftime(&tmTime, pszTimeStr, sStringSize - strlen(szDiffTime) - 1);
 	strcat(pszTimeStr, szDiffTime);
 
 	return 0;
@@ -1141,7 +1141,8 @@ char **MscGetIPProperties(char const *pszFileName, const SYS_INET_ADDR *pPeerInf
 
 int MscHostSubMatch(char const *pszHostName, char const *pszHostMatch)
 {
-	int iMatchResult = 0, iHLen, iMLen;
+	int iMatchResult = 0;
+	ssize_t iHLen, iMLen;
 
 	if ((iHLen = strlen(pszHostMatch)) > 0 && pszHostMatch[iHLen - 1] == '.')
 		iHLen--;

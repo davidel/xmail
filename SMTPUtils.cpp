@@ -748,7 +748,7 @@ char *USmtpGetSMTPError(SMTPError *pSMTPE, char *pszError, int iMaxError)
 char *USmtpGetSMTPRmtMsgID(char const *pszAckDATA, char *pszRmtMsgID,
 			   ssize_t sMaxMsg)
 {
-	size_t sRmtMsgLen;
+	ssize_t sRmtMsgLen;
 	char const *pszTmp;
 
 	for (; isdigit(*pszAckDATA); pszAckDATA++);

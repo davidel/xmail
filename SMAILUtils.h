@@ -118,7 +118,7 @@ char const *USmlDotAtom(char const *pszStr, char const *pszTop);
 int USmlValidAddress(char const *pszAddress, char const *pszTop);
 int USmlValidHost(char const *pszHost, char const *pszTop);
 int USmlParseAddress(char const *pszAddress, char *pszPreAddr,
-		     int iMaxPreAddress, char *pszEmailAddr, int iMaxAddress);
+		     int iMaxPreAddress, char *pszEmailAddr, size_t sMaxAddress);
 int USmlDeliverFetchedMsg(char const *pszSyncAddr, char const *pszFetchHdrTags,
 			  char const *pszMailFile);
 int USmlMailLoopCheck(SPLF_HANDLE hFSpool, SVRCFG_HANDLE hSvrConfig);
