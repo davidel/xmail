@@ -372,7 +372,7 @@ char *MscStrftime(struct tm const *ptmTime, char *pszDateStr, int iSize)
 	return pszDateStr;
 }
 
-static int GetTimeStr(char *pszTimeStr, int iStringSize, time_t tCurr)
+static int GetTimeStr(char *pszTimeStr, size_t sStringSize, time_t tCurr)
 {
 	int iDiffHours = 0, iDiffMins = 0;
 	struct tm tmTime;
@@ -383,7 +383,7 @@ static int GetTimeStr(char *pszTimeStr, int iStringSize, time_t tCurr)
 		sprintf(szDiffTime, " +%02d%02d", iDiffHours, iDiffMins);
 	else
 		sprintf(szDiffTime, " -%02d%02d", -iDiffHours, iDiffMins);
-	MscStrftime(&tmTime, pszTimeStr, iStringSize - strlen(szDiffTime) - 1);
+	MscStrftime(&tmTime, pszTimeStr, sStringSize - strlen(szDiffTime) - 1);
 	strcat(pszTimeStr, szDiffTime);
 
 	return 0;
@@ -418,7 +418,7 @@ static bool IsRFC822HeaderLine(char const *pszLn)
 
 int main(int iArgCount, char *pszArgs[])
 {
-	int iVarLength = 0;
+	size_t sVarLength = 0;
 	FILE *pInFile = stdin;
 	char *pszMailRoot;
 	char szMailRoot[SYS_MAX_PATH] = "";
@@ -427,14 +427,14 @@ int main(int iArgCount, char *pszArgs[])
 	tzset();
 
 	if ((pszMailRoot = SysGetEnv(ENV_MAIL_ROOT)) == NULL ||
-	    (iVarLength = strlen(pszMailRoot)) == 0) {
+	    (sVarLength = strlen(pszMailRoot)) == 0) {
 		free(pszMailRoot);
 		fprintf(stderr, "cannot find environment variable: %s\n",
 			ENV_MAIL_ROOT);
 		return 1;
 	}
 	StrSNCpy(szMailRoot, pszMailRoot);
-	if (szMailRoot[iVarLength - 1] != SYS_SLASH_CHAR)
+	if (szMailRoot[sVarLength - 1] != SYS_SLASH_CHAR)
 		strcat(szMailRoot, SYS_SLASH_STR);
 	free(pszMailRoot);
 
@@ -592,11 +592,11 @@ int main(int iArgCount, char *pszArgs[])
 	char szBuffer[1536];
 
 	for (iLine = 0; fgets(szBuffer, sizeof(szBuffer) - 1, pInFile) != NULL; iLine++) {
-		int iLineLength = strlen(szBuffer);
+		size_t sLineLength = strlen(szBuffer);
 
-		for (; iLineLength > 0 && (szBuffer[iLineLength - 1] == '\r' ||
-					   szBuffer[iLineLength - 1] == '\n'); iLineLength--);
-		szBuffer[iLineLength] = '\0';
+		for (; sLineLength > 0 && (szBuffer[sLineLength - 1] == '\r' ||
+					   szBuffer[sLineLength - 1] == '\n'); sLineLength--);
+		szBuffer[sLineLength] = '\0';
 
 		/* Is it time to stop reading ? */
 		if (bDotMode && strcmp(szBuffer, ".") == 0)
@@ -616,7 +616,7 @@ int main(int iArgCount, char *pszArgs[])
 			if ((iLine == 0) && !IsRFC822HeaderLine(szBuffer))
 				bStraightFile = true;
 
-			if (bStraightFile || iLineLength == 0) {
+			if (bStraightFile || sLineLength == 0) {
 				bInHeaders = false;
 				bNoEmit = false;
 
@@ -645,7 +645,7 @@ int main(int iArgCount, char *pszArgs[])
 					if (iRcptCurr > 0)
 						iRcptCount += iRcptCurr;
 				}
-			} else if (iLineLength > 0) {
+			} else if (sLineLength > 0) {
 				bNoEmit = (strnicmp(szBuffer, "Bcc:", 4) == 0);
 				bRcptSource = strnicmp(szBuffer, "To:", 3) == 0 ||
 					strnicmp(szBuffer, "Cc:", 3) == 0 ||
@@ -680,14 +680,14 @@ int main(int iArgCount, char *pszArgs[])
 			return 6;
 		}
 		while (fgets(szBuffer, sizeof(szBuffer) - 1, pRcptFile) != NULL) {
-			int iLineLength = strlen(szBuffer);
+			size_t sLineLength = strlen(szBuffer);
 
-			for (; iLineLength > 0 &&
-				     (szBuffer[iLineLength - 1] == '\r' ||
-				      szBuffer[iLineLength - 1] == '\n'); iLineLength--);
-			szBuffer[iLineLength] = '\0';
+			for (; sLineLength > 0 &&
+				     (szBuffer[sLineLength - 1] == '\r' ||
+				      szBuffer[sLineLength - 1] == '\n'); sLineLength--);
+			szBuffer[sLineLength] = '\0';
 
-			if (iLineLength >= MAX_ADDR_NAME)
+			if (sLineLength >= MAX_ADDR_NAME)
 				continue;
 
 			char *pszAt = strchr(szBuffer, '@');
@@ -751,4 +751,3 @@ int main(int iArgCount, char *pszArgs[])
 
 	return 0;
 }
-
