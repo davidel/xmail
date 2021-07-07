@@ -151,13 +151,11 @@ static int BSslHandleAsync(SslBindCtx *pCtx, ssize_t sCode, int iDefError, int i
 
 static ssize_t BSslReadLL(SslBindCtx *pCtx, void *pData, size_t sSize, int iTimeo)
 {
-	ssize_t sRead;
+	size_t sRead = 0;
 
 	for (;;) {
-		int iError;
-
-		sRead = SSL_read(pCtx->pSSL, pData, sSize);
-		if ((iError = BSslHandleAsync(pCtx, sRead, ERR_SSL_READ, iTimeo)) < 0)
+		int iError = SSL_read_ex(pCtx->pSSL, pData, sSize, &sRead);
+		if ((iError = BSslHandleAsync(pCtx, iError, ERR_SSL_READ, iTimeo)) < 0)
 			return iError;
 		if (iError == 0)
 			break;
@@ -166,15 +164,13 @@ static ssize_t BSslReadLL(SslBindCtx *pCtx, void *pData, size_t sSize, int iTime
 	return sRead;
 }
 
-static int BSslWriteLL(SslBindCtx *pCtx, void const *pData, size_t sSize, int iTimeo)
+static ssize_t BSslWriteLL(SslBindCtx *pCtx, void const *pData, size_t sSize, int iTimeo)
 {
-	ssize_t sWrite;
+	size_t sWrite = 0;
 
 	for (;;) {
-		int iError;
-
-		sWrite = SSL_write(pCtx->pSSL, pData, sSize);
-		if ((iError = BSslHandleAsync(pCtx, sWrite, ERR_SSL_WRITE, iTimeo)) < 0)
+		int iError = SSL_write_ex(pCtx->pSSL, pData, sSize, &sWrite);
+		if ((iError = BSslHandleAsync(pCtx, iError, ERR_SSL_WRITE, iTimeo)) < 0)
 			return iError;
 		if (iError == 0)
 			break;
