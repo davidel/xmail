@@ -40,7 +40,7 @@
 #define DNS_MAX_RESP_PACKET     1024
 #define DNS_SEND_RETRIES        3
 #define DNS_MAX_RR_DATA         256
-#define DNS_RESPDATA_EXTRA      (2 * sizeof(int))
+#define DNS_RESPDATA_EXTRA      (2 * sizeof(size_t))
 
 #if defined(BIG_ENDIAN_CPU)
 #define DNS_LABEL_LEN_MASK      0x3fff
@@ -112,13 +112,13 @@ static DNSRecord *DNS_AllocRec(DNSAnswer *pAns, int iType,
 	return pRec;
 }
 
-static SYS_UINT8 *DNS_AllocRespData(int iSize)
+static SYS_UINT8 *DNS_AllocRespData(size_t sSize)
 {
-	SYS_UINT8 *pBaseData = (SYS_UINT8 *) SysAlloc(iSize + DNS_RESPDATA_EXTRA);
+	SYS_UINT8 *pBaseData = (SYS_UINT8 *) SysAlloc(sSize + DNS_RESPDATA_EXTRA);
 
 	if (pBaseData == NULL)
 		return NULL;
-	*(int *) pBaseData = iSize;
+	*(size_t *) pBaseData = sSize;
 
 	return pBaseData + DNS_RESPDATA_EXTRA;
 }
@@ -129,69 +129,69 @@ static void DNS_FreeRespData(SYS_UINT8 *pRespData)
 		SysFree(pRespData - DNS_RESPDATA_EXTRA);
 }
 
-static int DNS_RespDataSize(SYS_UINT8 const *pRespData)
+static size_t DNS_RespDataSize(SYS_UINT8 const *pRespData)
 {
 	SYS_UINT8 const *pBaseData = pRespData - DNS_RESPDATA_EXTRA;
 
-	return *(int *) pBaseData;
+	return *(const size_t *) pBaseData;
 }
 
 static int DNS_GetText(SYS_UINT8 const *pBaseData, SYS_UINT8 const *pRespData,
-		       char *pszText, int iMaxText, int *piRRLength)
+		       char *pszText, size_t sMaxText, size_t *pRRLength)
 {
-	int iBaseLength = DNS_RespDataSize(pBaseData);
-	int iCurrOffset = (int) (pRespData - pBaseData);
-	int iDataLength = 0, iTextLength = 0, iBackLink = 0, iLabelLength;
+	size_t sBaseLength = DNS_RespDataSize(pBaseData);
+	size_t sCurrOffset = (size_t) (pRespData - pBaseData);
+	size_t sDataLength = 0, sTextLength = 0, sBackLink = 0, sLabelLength;
 
 	while (*pRespData != 0) {
 		if (*pRespData & DNS_LABEL_LEN_INVMASK) {
 			/* Got displacement from base-data (boundary checked) */
-			if ((iCurrOffset = (int)
-			     ntohs(MscReadUint16(pRespData) & DNS_LABEL_LEN_MASK)) >= iBaseLength) {
+			if ((sCurrOffset =
+			     ntohs(MscReadUint16(pRespData) & DNS_LABEL_LEN_MASK)) >= sBaseLength) {
 				ErrSetErrorCode(ERR_BAD_DNS_NAME_RECORD);
 				return ERR_BAD_DNS_NAME_RECORD;
 			}
-			pRespData = pBaseData + iCurrOffset;
-			if (!iBackLink)
-				iDataLength += sizeof(SYS_UINT16), ++iBackLink;
+			pRespData = pBaseData + sCurrOffset;
+			if (!sBackLink)
+				sDataLength += sizeof(SYS_UINT16), ++sBackLink;
 
 			continue;
 		}
 		/* Extract label length (boundary checked) */
-		iLabelLength = (int) *pRespData;
-		if ((iMaxText > 0 && (iTextLength + iLabelLength + 2 >= iMaxText)) ||
-		    (iCurrOffset + iLabelLength + 1 >= iBaseLength)) {
+		sLabelLength = *pRespData;
+		if ((sMaxText > 0 && (sTextLength + sLabelLength + 2 >= sMaxText)) ||
+		    (sCurrOffset + sLabelLength + 1 >= sBaseLength)) {
 			ErrSetErrorCode(ERR_BAD_DNS_NAME_RECORD);
 			return ERR_BAD_DNS_NAME_RECORD;
 		}
 		if (pszText != NULL) {
 			/* Append to name and update pointers */
-			memcpy(pszText, pRespData + 1, iLabelLength);
-			pszText[iLabelLength] = '.';
-			pszText += iLabelLength + 1;
+			memcpy(pszText, pRespData + 1, sLabelLength);
+			pszText[sLabelLength] = '.';
+			pszText += sLabelLength + 1;
 		}
-		iTextLength += iLabelLength + 1;
+		sTextLength += sLabelLength + 1;
 
 		/* If we've not got a back-jump, update the data length */
-		if (!iBackLink)
-			iDataLength += iLabelLength + 1;
+		if (!sBackLink)
+			sDataLength += sLabelLength + 1;
 
 		/* Move pointers */
-		iCurrOffset += iLabelLength + 1;
-		pRespData += iLabelLength + 1;
+		sCurrOffset += sLabelLength + 1;
+		pRespData += sLabelLength + 1;
 	}
 	if (pszText != NULL)
 		*pszText = '\0';
-	if (piRRLength != NULL)
-		*piRRLength = (!iBackLink) ? iDataLength + 1: iDataLength;
+	if (pRRLength != NULL)
+		*pRRLength = (!sBackLink) ? sDataLength + 1: sDataLength;
 
 	return 0;
 }
 
 static int DNS_GetResourceRecord(SYS_UINT8 const *pBaseData, SYS_UINT8 const *pRespData,
-				 DNSResourceRecord *pRR, int *piRRLength)
+				 DNSResourceRecord *pRR, size_t *pRRLength)
 {
-	int iRRLen;
+	size_t sRRLen;
 	char *pszName;
 
 	if (pRR != NULL) {
@@ -203,27 +203,27 @@ static int DNS_GetResourceRecord(SYS_UINT8 const *pBaseData, SYS_UINT8 const *pR
 
 	/* Read name field */
 	if (DNS_GetText(pBaseData, pRespData, pszName,
-			pszName != NULL ? sizeof(pRR->szName): 0, &iRRLen) < 0)
+			pszName != NULL ? sizeof(pRR->szName): 0, &sRRLen) < 0)
 		return ErrGetErrorCode();
-	pRespData += iRRLen;
+	pRespData += sRRLen;
 
 	/* Read type field */
 	if (pRR != NULL)
 		pRR->Type = ntohs(MscReadUint16(pRespData));
 	pRespData += sizeof(SYS_UINT16);
-	iRRLen += sizeof(SYS_UINT16);
+	sRRLen += sizeof(SYS_UINT16);
 
 	/* Read class field */
 	if (pRR != NULL)
 		pRR->Class = ntohs(MscReadUint16(pRespData));
 	pRespData += sizeof(SYS_UINT16);
-	iRRLen += sizeof(SYS_UINT16);
+	sRRLen += sizeof(SYS_UINT16);
 
 	/* Read TTL field */
 	if (pRR != NULL)
 		pRR->TTL = ntohl(MscReadUint32(pRespData));
 	pRespData += sizeof(SYS_UINT32);
-	iRRLen += sizeof(SYS_UINT32);
+	sRRLen += sizeof(SYS_UINT32);
 
 	/* Read lenght field */
 	SYS_UINT16 Lenght = ntohs(MscReadUint16(pRespData));
@@ -231,14 +231,14 @@ static int DNS_GetResourceRecord(SYS_UINT8 const *pBaseData, SYS_UINT8 const *pR
 	if (pRR != NULL)
 		pRR->Lenght = Lenght;
 	pRespData += sizeof(SYS_UINT16);
-	iRRLen += sizeof(SYS_UINT16);
+	sRRLen += sizeof(SYS_UINT16);
 
 	/* Read RR data */
 	if (pRR != NULL)
 		pRR->pRespData = pRespData;
-	iRRLen += (int) Lenght;
-	if (piRRLength != NULL)
-		*piRRLength = iRRLen;
+	sRRLen += (int) Lenght;
+	if (pRRLength != NULL)
+		*pRRLength = sRRLen;
 
 	return 0;
 }
@@ -278,7 +278,7 @@ static SYS_UINT16 DNS_GetUniqueQueryId(void)
 
 static int DNS_RequestSetup(DNSQuery **ppDNSQ, unsigned int uOpCode,
 			    unsigned int uQType, char const *pszInetName,
-			    int *piQLength, int iAskQR)
+			    size_t *pQLength, int iAskQR)
 {
 	ssize_t sNameLen;
 	DNSQuery *pDNSQ;
@@ -313,7 +313,7 @@ static int DNS_RequestSetup(DNSQuery **ppDNSQ, unsigned int uOpCode,
 	pQueryData += sizeof(SYS_UINT16);
 
 	*ppDNSQ = pDNSQ;
-	*piQLength = (int) (pQueryData - (SYS_UINT8 *) pDNSQ);
+	*pQLength = (size_t) (pQueryData - (SYS_UINT8 *) pDNSQ);
 
 	return 0;
 }
@@ -390,7 +390,8 @@ static SYS_UINT8 *DNS_QuerySendStream(char const *pszDNSServer, int iPortNo, int
 static SYS_UINT8 *DNS_QuerySendDGram(char const *pszDNSServer, int iPortNo, int iTimeout,
 				     DNSQuery const *pDNSQ, int iQLenght, int *piTrunc)
 {
-	int i, iPktSize;
+	int i;
+	ssize_t sPktSize;
 	DNS_HEADER *pDNSH;
 	SYS_UINT8 *pRespData;
 	SYS_SOCKET SockFD;
@@ -408,7 +409,7 @@ static SYS_UINT8 *DNS_QuerySendDGram(char const *pszDNSServer, int iPortNo, int 
 			continue;
 
 		ZeroData(RecvAddr);
-		if ((iPktSize = SysRecvDataFrom(SockFD, &RecvAddr,
+		if ((sPktSize = SysRecvDataFrom(SockFD, &RecvAddr,
 						(char *) RespBuffer, sizeof(RespBuffer),
 						iTimeout)) < (int) sizeof(DNS_HEADER))
 			continue;
@@ -429,13 +430,13 @@ static SYS_UINT8 *DNS_QuerySendDGram(char const *pszDNSServer, int iPortNo, int 
 			ErrSetErrorCode(ERR_TRUNCATED_DGRAM_DNS_RESPONSE);
 			return NULL;
 		}
-		if ((pRespData = DNS_AllocRespData(iPktSize + 1)) == NULL) {
+		if ((pRespData = DNS_AllocRespData(sPktSize + 1)) == NULL) {
 			ErrorPush();
 			SysCloseSocket(SockFD);
 			ErrSetErrorCode(ErrorFetch());
 			return NULL;
 		}
-		memcpy(pRespData, RespBuffer, iPktSize);
+		memcpy(pRespData, RespBuffer, sPktSize);
 		SysCloseSocket(SockFD);
 
 		return pRespData;
@@ -451,19 +452,19 @@ static SYS_UINT8 *DNS_QueryExec(char const *pszDNSServer, int iPortNo, int iTime
 				char const *pszInetName, int iAskQR)
 {
 	int iTrunc = 0;
-	int iQLenght;
+	size_t sQLenght;
 	DNSQuery *pDNSQ;
 	SYS_UINT8 *pRespData;
 
-	if (DNS_RequestSetup(&pDNSQ, uOpCode, uQType, pszInetName, &iQLenght,
+	if (DNS_RequestSetup(&pDNSQ, uOpCode, uQType, pszInetName, &sQLenght,
 			     iAskQR) < 0)
 		return NULL;
 
 	pRespData = DNS_QuerySendDGram(pszDNSServer, iPortNo, iTimeout,
-				       pDNSQ, iQLenght, &iTrunc);
+				       pDNSQ, sQLenght, &iTrunc);
 	if (pRespData == NULL && iTrunc)
 		pRespData = DNS_QuerySendStream(pszDNSServer, iPortNo, iTimeout,
-						pDNSQ, iQLenght);
+						pDNSQ, sQLenght);
 	SysFree(pDNSQ);
 
 	return pRespData;
@@ -500,20 +501,20 @@ static int DNS_DecodeRecord(DNSResourceRecord const *pRR, DNSAnswer *pAns)
 			return ErrGetErrorCode();
 		memcpy(pRec->U.AAAA.IAddr6, pRRData, sizeof(pRec->U.AAAA.IAddr6));
 	} else if (pRR->Type == QTYPE_SOA) {
-		int iRRLen;
+		size_t sRRLen;
 
 		if ((pRec = DNS_AllocRec(pAns, pRR->Type, pRR)) == NULL)
 			return ErrGetErrorCode();
 
 		if (DNS_GetText(pRR->pBaseData, pRRData, pRec->U.SOA.szName,
-				sizeof(pRec->U.SOA.szName), &iRRLen) < 0)
+				sizeof(pRec->U.SOA.szName), &sRRLen) < 0)
 			return ErrGetErrorCode();
-		pRRData += iRRLen;
+		pRRData += sRRLen;
 
 		if (DNS_GetText(pRR->pBaseData, pRRData, pRec->U.SOA.szAddr,
-				sizeof(pRec->U.SOA.szAddr), &iRRLen) < 0)
+				sizeof(pRec->U.SOA.szAddr), &sRRLen) < 0)
 			return ErrGetErrorCode();
-		pRRData += iRRLen;
+		pRRData += sRRLen;
 
 		pRec->U.SOA.Serial = ntohl(MscReadUint32(pRRData));
 		pRRData += sizeof(SYS_UINT32);
@@ -557,33 +558,33 @@ static int DNS_MapRCodeError(unsigned int uRCode)
 
 static int DNS_GetQuery(SYS_UINT8 const *pBaseData, SYS_UINT8 const *pRespData,
 			char *pszInetName, int iMaxName, SYS_UINT16 *pType,
-			SYS_UINT16 *pClass, int *piRRLength)
+			SYS_UINT16 *pClass, size_t *pRRLength)
 {
 	/* Read name field */
-	int iQueryLen = 0;
+	size_t sQueryLen = 0;
 
 	if (DNS_GetText(pBaseData, pRespData, pszInetName, iMaxName,
-			&iQueryLen) < 0)
+			&sQueryLen) < 0)
 		return ErrGetErrorCode();
 
-	pRespData += iQueryLen;
+	pRespData += sQueryLen;
 
 	/* Read type field */
 	if (pType != NULL)
 		*pType = ntohs(MscReadUint16(pRespData));
 
 	pRespData += sizeof(SYS_UINT16);
-	iQueryLen += sizeof(SYS_UINT16);
+	sQueryLen += sizeof(SYS_UINT16);
 
 	/* Read class field */
 	if (pClass != NULL)
 		*pClass = ntohs(MscReadUint16(pRespData));
 
 	pRespData += sizeof(SYS_UINT16);
-	iQueryLen += sizeof(SYS_UINT16);
+	sQueryLen += sizeof(SYS_UINT16);
 
-	if (piRRLength != NULL)
-		*piRRLength = iQueryLen;
+	if (pRRLength != NULL)
+		*pRRLength = sQueryLen;
 
 	return 0;
 }
@@ -592,7 +593,8 @@ static int DNS_DecodeResponse(SYS_UINT8 *pRespData, DNSAnswer *pAns)
 {
 	DNSQuery *pDNSQ = (DNSQuery *) pRespData;
 	SYS_UINT8 *pBaseData;
-	int i, iRRLenght, iQLenght;
+	int i;
+	size_t sRRLenght, sQLenght;
 	SYS_UINT16 Type, Class;
 	DNSResourceRecord RR;
 	char szInetName[MAX_HOST_NAME];
@@ -616,34 +618,34 @@ static int DNS_DecodeResponse(SYS_UINT8 *pRespData, DNSAnswer *pAns)
 	/* Scan query data */
 	for (i = 0; i < pAns->iQDCount; i++) {
 		if (DNS_GetQuery(pBaseData, pRespData, szInetName, sizeof(szInetName),
-				 &Type, &Class, &iQLenght) < 0)
+				 &Type, &Class, &sQLenght) < 0)
 			return ErrGetErrorCode();
-		pRespData += iQLenght;
+		pRespData += sQLenght;
 	}
 
 	/* Scan answer data */
 	for (i = 0; i < pAns->iANCount; i++) {
-		if (DNS_GetResourceRecord(pBaseData, pRespData, &RR, &iRRLenght) < 0)
+		if (DNS_GetResourceRecord(pBaseData, pRespData, &RR, &sRRLenght) < 0)
 			return ErrGetErrorCode();
-		pRespData += iRRLenght;
+		pRespData += sRRLenght;
 		DNS_DecodeRecord(&RR, pAns);
 	}
 
 	/* Scan name servers data */
 	for (i = 0; i < pAns->iNSCount; i++) {
-		if (DNS_GetResourceRecord(pBaseData, pRespData, &RR, &iRRLenght) < 0)
+		if (DNS_GetResourceRecord(pBaseData, pRespData, &RR, &sRRLenght) < 0)
 			return ErrGetErrorCode();
 
-		pRespData += iRRLenght;
+		pRespData += sRRLenght;
 		DNS_DecodeRecord(&RR, pAns);
 	}
 
 	/* Scan additional records data */
 	for (i = 0; i < pAns->iARCount; i++) {
-		if (DNS_GetResourceRecord(pBaseData, pRespData, &RR, &iRRLenght) < 0)
+		if (DNS_GetResourceRecord(pBaseData, pRespData, &RR, &sRRLenght) < 0)
 			return ErrGetErrorCode();
 
-		pRespData += iRRLenght;
+		pRespData += sRRLenght;
 		DNS_DecodeRecord(&RR, pAns);
 	}
 
@@ -810,19 +812,20 @@ int DNS_Query(char const *pszName, unsigned int uQType, DNSAnswer *pAns,
 int DNS_QueryDirect(char const *pszDNSServer, char const *pszName,
 		    unsigned int uQType, int iQuerySockType, DNSAnswer *pAns)
 {
-	int iQLenght, iError, iTrunc = 0;
+	int iError, iTrunc = 0;
+	size_t sQLenght;
 	DNSQuery *pDNSQ;
 	SYS_UINT8 *pRespData;
 
 	/* Setup DNS MX query with recursion requested */
-	if (DNS_RequestSetup(&pDNSQ, 0, uQType, pszName, &iQLenght, 1) < 0)
+	if (DNS_RequestSetup(&pDNSQ, 0, uQType, pszName, &sQLenght, 1) < 0)
 		return ErrGetErrorCode();
 
 	switch (iQuerySockType) {
 	case DNS_QUERY_TCP:
 		pRespData = DNS_QuerySendStream(pszDNSServer, DNS_PORTNO,
 						DNS_SOCKET_TIMEOUT,
-						pDNSQ, iQLenght);
+						pDNSQ, sQLenght);
 		break;
 
 	case DNS_QUERY_UDP:
@@ -830,11 +833,11 @@ int DNS_QueryDirect(char const *pszDNSServer, char const *pszName,
 		/* Try needed UDP query first, if it's truncated switch to TCP query */
 		if ((pRespData = DNS_QuerySendDGram(pszDNSServer, DNS_PORTNO,
 						    DNS_SOCKET_TIMEOUT,
-						    pDNSQ, iQLenght,
+						    pDNSQ, sQLenght,
 						    &iTrunc)) == NULL && iTrunc)
 			pRespData = DNS_QuerySendStream(pszDNSServer, DNS_PORTNO,
 							DNS_SOCKET_TIMEOUT, pDNSQ,
-							iQLenght);
+							sQLenght);
 	}
 	SysFree(pDNSQ);
 	if (pRespData == NULL)
