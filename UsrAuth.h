@@ -26,7 +26,7 @@
 #define AUTH_SERVICE_POP3               "pop3"
 #define AUTH_SERVICE_SMTP               "smtp"
 
-char *UAthGetRootPath(char const *pszService, char *pszAuthPath, int iMaxPath);
+char *UAthGetRootPath(char const *pszService, char *pszAuthPath, size_t sMaxPath);
 int UAthAuthenticateUser(char const *pszService, char const *pszDomain,
 			 char const *pszUsername, char const *pszPassword);
 int UAthAddUser(char const *pszService, UserInfo * pUI);

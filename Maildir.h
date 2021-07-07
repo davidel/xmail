@@ -27,7 +27,7 @@
 
 int MdirCreateStructure(const char *pszBasePath);
 int MdirGetTmpMaildirEntry(const char *pszMaildirPath, char *pszFilePath,
-			   int iMaxPath);
+			   size_t sMaxPath);
 int MdirMoveTmpEntryInNew(const char *pszTmpEntryPath);
 int MdirMoveMessage(const char *pszMaildirPath, const char *pszFileName,
 		    const char *pszMessageID = NULL);

@@ -57,13 +57,13 @@ struct UAuthMacroSubstCtx {
 };
 
 
-char *UAthGetRootPath(char const *pszService, char *pszAuthPath, int iMaxPath)
+char *UAthGetRootPath(char const *pszService, char *pszAuthPath, size_t sMaxPath)
 {
-	CfgGetRootPath(pszAuthPath, iMaxPath);
+	CfgGetRootPath(pszAuthPath, sMaxPath);
 
-	StrNCat(pszAuthPath, USER_AUTH_DIR, iMaxPath);
+	StrNCat(pszAuthPath, USER_AUTH_DIR, sMaxPath);
 	AppendSlash(pszAuthPath);
-	StrNCat(pszAuthPath, pszService, iMaxPath);
+	StrNCat(pszAuthPath, pszService, sMaxPath);
 	AppendSlash(pszAuthPath);
 
 	return pszAuthPath;

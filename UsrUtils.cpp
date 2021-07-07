@@ -134,10 +134,10 @@ static int UsrCalcAliasHash(char const *const *ppszTabTokens, int const *piField
 	return TbixCalculateHash(ppszTabTokens, piFieldsIdx, pulHashVal, bCaseSens);
 }
 
-static char *UsrGetTableFilePath(char *pszUsrFilePath, int iMaxPath)
+static char *UsrGetTableFilePath(char *pszUsrFilePath, size_t sMaxPath)
 {
-	CfgGetRootPath(pszUsrFilePath, iMaxPath);
-	StrNCat(pszUsrFilePath, SVR_TABLE_FILE, iMaxPath);
+	CfgGetRootPath(pszUsrFilePath, sMaxPath);
+	StrNCat(pszUsrFilePath, SVR_TABLE_FILE, sMaxPath);
 
 	return pszUsrFilePath;
 }
@@ -155,10 +155,10 @@ int UsrCheckUsersIndexes(void)
 	return 0;
 }
 
-static char *UsrGetAliasFilePath(char *pszAlsFilePath, int iMaxPath)
+static char *UsrGetAliasFilePath(char *pszAlsFilePath, size_t sMaxPath)
 {
-	CfgGetRootPath(pszAlsFilePath, iMaxPath);
-	StrNCat(pszAlsFilePath, SVR_ALIAS_FILE, iMaxPath);
+	CfgGetRootPath(pszAlsFilePath, sMaxPath);
+	StrNCat(pszAlsFilePath, SVR_ALIAS_FILE, sMaxPath);
 
 	return pszAlsFilePath;
 }
@@ -194,10 +194,10 @@ static int UsrRebuildAliasesIndexes(char const *pszAlsFilePath)
 	return 0;
 }
 
-char *UsrGetMLTableFilePath(UserInfo *pUI, char *pszMLTablePath, int iMaxPath)
+char *UsrGetMLTableFilePath(UserInfo *pUI, char *pszMLTablePath, size_t sMaxPath)
 {
-	UsrGetUserPath(pUI, pszMLTablePath, iMaxPath, 1);
-	StrNCat(pszMLTablePath, MLUSERS_TABLE_FILE, iMaxPath);
+	UsrGetUserPath(pUI, pszMLTablePath, sMaxPath, 1);
+	StrNCat(pszMLTablePath, MLUSERS_TABLE_FILE, sMaxPath);
 
 	return pszMLTablePath;
 }
@@ -476,22 +476,22 @@ static int UsrWriteInfoList(HSLIST &InfoList, FILE *pProfileFile)
 	return 0;
 }
 
-static int UsrGetDefaultInfoFile(char const *pszDomain, char *pszInfoFile, int iMaxPath)
+static int UsrGetDefaultInfoFile(char const *pszDomain, char *pszInfoFile, size_t sMaxPath)
 {
 	if (pszDomain != NULL) {
 		/* Try to lookup domain specific configuration */
-		MDomGetDomainPath(pszDomain, pszInfoFile, iMaxPath, 1);
+		MDomGetDomainPath(pszDomain, pszInfoFile, sMaxPath, 1);
 
-		StrNCat(pszInfoFile, DEFAULT_USER_PROFILE_FILE, iMaxPath);
+		StrNCat(pszInfoFile, DEFAULT_USER_PROFILE_FILE, sMaxPath);
 
 		if (SysExistFile(pszInfoFile))
 			return 0;
 
 	}
 	/* Try to lookup global configuration */
-	CfgGetRootPath(pszInfoFile, iMaxPath);
+	CfgGetRootPath(pszInfoFile, sMaxPath);
 
-	StrNCat(pszInfoFile, DEFAULT_USER_PROFILE_FILE, iMaxPath);
+	StrNCat(pszInfoFile, DEFAULT_USER_PROFILE_FILE, sMaxPath);
 
 	if (!SysExistFile(pszInfoFile)) {
 		ErrSetErrorCode(ERR_NO_USER_DEFAULT_PRFILE);
@@ -1815,17 +1815,17 @@ UserInfo *UsrGetNextUser(USRF_HANDLE hUsersDB, int iLoadUCfg)
 	return pUI;
 }
 
-static char *UsrGetPop3LocksPath(UserInfo *pUI, char *pszPop3LockPath, int iMaxPath)
+static char *UsrGetPop3LocksPath(UserInfo *pUI, char *pszPop3LockPath, size_t sMaxPath)
 {
-	CfgGetRootPath(pszPop3LockPath, iMaxPath);
+	CfgGetRootPath(pszPop3LockPath, sMaxPath);
 
-	StrNCat(pszPop3LockPath, POP3_LOCKS_DIR, iMaxPath);
+	StrNCat(pszPop3LockPath, POP3_LOCKS_DIR, sMaxPath);
 	AppendSlash(pszPop3LockPath);
 
 	char szUserAddress[MAX_ADDR_NAME];
 
 	UsrGetAddress(pUI, szUserAddress);
-	StrNCat(pszPop3LockPath, szUserAddress, iMaxPath);
+	StrNCat(pszPop3LockPath, szUserAddress, sMaxPath);
 
 	return pszPop3LockPath;
 }
@@ -1868,7 +1868,7 @@ int UsrClearPop3LocksDir(void)
  * If the DOMAIN private directory exists, the temporary file will be
  * generated inside there, otherwise inside the XMail temporary directory.
  */
-int UsrGetTmpFile(char const *pszDomain, char *pszTmpFile, int iMaxPath)
+int UsrGetTmpFile(char const *pszDomain, char *pszTmpFile, size_t sMaxPath)
 {
 	char szTmpDir[SYS_MAX_PATH];
 
@@ -1876,7 +1876,7 @@ int UsrGetTmpFile(char const *pszDomain, char *pszTmpFile, int iMaxPath)
 		MDomGetDomainPath(pszDomain, szTmpDir, sizeof(szTmpDir) - 1, 1);
 		StrNCat(szTmpDir, USR_DOMAIN_TMPDIR, sizeof(szTmpDir) - 1);
 		if (SysExistDir(szTmpDir)) {
-			if (MscUniqueFile(szTmpDir, pszTmpFile, iMaxPath) < 0)
+			if (MscUniqueFile(szTmpDir, pszTmpFile, sMaxPath) < 0)
 				return ErrGetErrorCode();
 
 			return 0;
@@ -1887,24 +1887,24 @@ int UsrGetTmpFile(char const *pszDomain, char *pszTmpFile, int iMaxPath)
 	if (!SysExistDir(szTmpDir) && SysMakeDir(szTmpDir) < 0)
 		return ErrGetErrorCode();
 
-	return MscUniqueFile(szTmpDir, pszTmpFile, iMaxPath);
+	return MscUniqueFile(szTmpDir, pszTmpFile, sMaxPath);
 }
 
-char *UsrGetUserPath(UserInfo *pUI, char *pszUserPath, int iMaxPath, int iFinalSlash)
+char *UsrGetUserPath(UserInfo *pUI, char *pszUserPath, size_t sMaxPath, int iFinalSlash)
 {
-	MDomGetDomainPath(pUI->pszDomain, pszUserPath, iMaxPath, 1);
-	StrNCat(pszUserPath, pUI->pszPath, iMaxPath);
+	MDomGetDomainPath(pUI->pszDomain, pszUserPath, sMaxPath, 1);
+	StrNCat(pszUserPath, pUI->pszPath, sMaxPath);
 	if (iFinalSlash)
 		AppendSlash(pszUserPath);
 
 	return pszUserPath;
 }
 
-char *UsrGetMailboxPath(UserInfo *pUI, char *pszMBPath, int iMaxPath, int iFinalSlash)
+char *UsrGetMailboxPath(UserInfo *pUI, char *pszMBPath, size_t sMaxPath, int iFinalSlash)
 {
-	UsrGetUserPath(pUI, pszMBPath, iMaxPath, 1);
+	UsrGetUserPath(pUI, pszMBPath, sMaxPath, 1);
 
-	StrNCat(pszMBPath, UsrGetMailboxDir(), iMaxPath);
+	StrNCat(pszMBPath, UsrGetMailboxDir(), sMaxPath);
 	if (iFinalSlash)
 		AppendSlash(pszMBPath);
 

@@ -110,7 +110,7 @@ void MscFreeDatumList(SysListHead *pHead)
 	}
 }
 
-int MscUniqueFile(char const *pszDir, char *pszFilePath, int iMaxPath)
+int MscUniqueFile(char const *pszDir, char *pszFilePath, size_t sMaxPath)
 {
 	/*
 	 * Get thread ID and host name. We do not use atomic inc on ulUniqSeq, since
@@ -120,7 +120,7 @@ int MscUniqueFile(char const *pszDir, char *pszFilePath, int iMaxPath)
 	char szHostName[MAX_HOST_NAME] = "";
 
 	gethostname(szHostName, sizeof(szHostName) - 1);
-	SysSNPrintf(pszFilePath, iMaxPath,
+	SysSNPrintf(pszFilePath, sMaxPath,
 		    "%s" SYS_SLASH_STR SYS_LLU_FMT ".%lx.%lx.%lx.%s",
 		    pszDir, SysMsTime(), SysGetCurrentThreadId(),
 		    SysGetCurrentProcessId(), ulUniqSeq++, szHostName);
@@ -128,7 +128,7 @@ int MscUniqueFile(char const *pszDir, char *pszFilePath, int iMaxPath)
 	return 0;
 }
 
-void MscSafeGetTmpFile(char *pszPath, int iMaxPath)
+void MscSafeGetTmpFile(char *pszPath, size_t sMaxPath)
 {
 	time_t tmNow;
 	unsigned long ulID;
@@ -157,7 +157,7 @@ void MscSafeGetTmpFile(char *pszPath, int iMaxPath)
 	md5_hex(MCtx.digest, szMD5);
 
 	SysGetTempDir(szTempDir, sizeof(szTempDir));
-	SysSNPrintf(pszPath, iMaxPath, "%s%s.xtmp", szTempDir, szMD5);
+	SysSNPrintf(pszPath, sMaxPath, "%s%s.xtmp", szTempDir, szMD5);
 }
 
 int MscRecvTextFile(char const *pszFileName, BSOCK_HANDLE hBSock, int iTimeout,
@@ -684,11 +684,11 @@ int MscMoveFile(char const *pszOldName, char const *pszNewName)
 	return SysRemove(pszOldName);
 }
 
-char *MscGetString(FILE *pFile, char *pszBuffer, int iMaxChars, int *piGotNL)
+char *MscGetString(FILE *pFile, char *pszBuffer, size_t sMaxChars, int *piGotNL)
 {
 	size_t sLength;
 
-	if (fgets(pszBuffer, iMaxChars, pFile) == NULL)
+	if (fgets(pszBuffer, sMaxChars, pFile) == NULL)
 		return NULL;
 	sLength = strlen(pszBuffer);
 	if (piGotNL != NULL)

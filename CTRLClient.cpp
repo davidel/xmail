@@ -59,9 +59,9 @@ static char const * const pszCClnErrors[] = {
 	"Either none or both private key and certificate file must be supplied"
 };
 
-char *SvrGetLogsDir(char *pszLogsDir, int iMaxPath)
+char *SvrGetLogsDir(char *pszLogsDir, size_t sMaxPath)
 {
-	SysSNPrintf(pszLogsDir, iMaxPath - 1, ".");
+	SysSNPrintf(pszLogsDir, sMaxPath - 1, ".");
 
 	return pszLogsDir;
 }

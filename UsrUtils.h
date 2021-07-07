@@ -61,7 +61,7 @@ typedef struct ALSF_HANDLE_struct {
 
 int UsrCheckUsersIndexes(void);
 int UsrCheckAliasesIndexes(void);
-char *UsrGetMLTableFilePath(UserInfo *pUI, char *pszMLTablePath, int iMaxPath);
+char *UsrGetMLTableFilePath(UserInfo *pUI, char *pszMLTablePath, size_t sMaxPath);
 UserType UsrGetUserType(UserInfo *pUI);
 UserInfo *UsrCreateDefaultUser(char const *pszDomain, char const *pszName,
 			       char const *pszPassword, UserType TypeUser);
@@ -95,9 +95,9 @@ UserInfo *UsrGetNextUser(USRF_HANDLE hUsersDB, int iLoadUCfg);
 int UsrPOP3Lock(UserInfo *pUI);
 void UsrPOP3Unlock(UserInfo *pUI);
 int UsrClearPop3LocksDir(void);
-int UsrGetTmpFile(char const *pszDomain, char *pszTmpFile, int iMaxPath);
-char *UsrGetUserPath(UserInfo *pUI, char *pszUserPath, int iMaxPath, int iFinalSlash);
-char *UsrGetMailboxPath(UserInfo *pUI, char *pszMBPath, int iMaxPath, int iFinalSlash);
+int UsrGetTmpFile(char const *pszDomain, char *pszTmpFile, size_t sMaxPath);
+char *UsrGetUserPath(UserInfo *pUI, char *pszUserPath, size_t sMaxPath, int iFinalSlash);
+char *UsrGetMailboxPath(UserInfo *pUI, char *pszMBPath, size_t sMaxPath, int iFinalSlash);
 int UsrMoveToMailBox(UserInfo *pUI, char const *pszFileName, char const *pszMessageID);
 int UsrGetMailProcessFile(UserInfo *pUI, char const *pszMPPath, unsigned long ulFlags);
 int UsrSetMailProcessFile(UserInfo *pUI, char const *pszMPPath, int iWhich);

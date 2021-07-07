@@ -37,7 +37,7 @@
 #include "MiscUtils.h"
 #include "Maildir.h"
 
-static int MdirMessageID(char *pszMessageID, int iMaxMessageID)
+static int MdirMessageID(char *pszMessageID, size_t sMaxMessageID)
 {
 	/*
 	 * Get thread ID and host name. We do not use atomic inc on ulUniqSeq, since
@@ -49,7 +49,7 @@ static int MdirMessageID(char *pszMessageID, int iMaxMessageID)
 	char szHostName[MAX_HOST_NAME] = "";
 
 	gethostname(szHostName, sizeof(szHostName) - 1);
-	SysSNPrintf(pszMessageID, iMaxMessageID,
+	SysSNPrintf(pszMessageID, sMaxMessageID,
 		    SYS_LLU_FMT ".%lu.%lx.%s",
 		    iMsTime, ulThreadID, ulUniqSeq++, szHostName);
 
@@ -93,13 +93,13 @@ int MdirCreateStructure(const char *pszBasePath)
 }
 
 int MdirGetTmpMaildirEntry(const char *pszMaildirPath, char *pszFilePath,
-			   int iMaxPath)
+			   size_t sMaxPath)
 {
 	char szMessageID[SYS_MAX_PATH];
 
 	if (MdirMessageID(szMessageID, sizeof(szMessageID)) < 0)
 		return ErrGetErrorCode();
-	SysSNPrintf(pszFilePath, iMaxPath,
+	SysSNPrintf(pszFilePath, sMaxPath,
 		    "%s" SYS_SLASH_STR "tmp" SYS_SLASH_STR "%s",
 		    pszMaildirPath, szMessageID);
 
@@ -157,4 +157,3 @@ int MdirMoveMessage(const char *pszMaildirPath, const char *pszFileName,
 
 	return 0;
 }
-

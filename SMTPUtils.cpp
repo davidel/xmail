@@ -115,20 +115,20 @@ static int USmtpSendCommand(BSOCK_HANDLE hBSock, char const *pszCommand,
 			    char *pszResponse, size_t sMaxResponse,
 			    int iTimeout = STD_SMTP_TIMEOUT);
 
-static char *USmtpGetGwTableFilePath(char *pszGwFilePath, int iMaxPath)
+static char *USmtpGetGwTableFilePath(char *pszGwFilePath, size_t sMaxPath)
 {
-	CfgGetRootPath(pszGwFilePath, iMaxPath);
+	CfgGetRootPath(pszGwFilePath, sMaxPath);
 
-	StrNCat(pszGwFilePath, SMTPGW_TABLE_FILE, iMaxPath);
+	StrNCat(pszGwFilePath, SMTPGW_TABLE_FILE, sMaxPath);
 
 	return pszGwFilePath;
 }
 
-static char *USmtpGetFwdTableFilePath(char *pszFwdFilePath, int iMaxPath)
+static char *USmtpGetFwdTableFilePath(char *pszFwdFilePath, size_t sMaxPath)
 {
-	CfgGetRootPath(pszFwdFilePath, iMaxPath);
+	CfgGetRootPath(pszFwdFilePath, sMaxPath);
 
-	StrNCat(pszFwdFilePath, SMTPFWD_TABLE_FILE, iMaxPath);
+	StrNCat(pszFwdFilePath, SMTPFWD_TABLE_FILE, sMaxPath);
 
 	return pszFwdFilePath;
 }
@@ -315,10 +315,10 @@ SMTPGateway **USmtpGetFwdGateways(SVRCFG_HANDLE hSvrConfig, char const *pszDomai
 	return NULL;
 }
 
-static char *USmtpGetRelayFilePath(char *pszRelayFilePath, int iMaxPath)
+static char *USmtpGetRelayFilePath(char *pszRelayFilePath, size_t sMaxPath)
 {
-	CfgGetRootPath(pszRelayFilePath, iMaxPath);
-	StrNCat(pszRelayFilePath, SMTP_RELAY_FILE, iMaxPath);
+	CfgGetRootPath(pszRelayFilePath, sMaxPath);
+	StrNCat(pszRelayFilePath, SMTP_RELAY_FILE, sMaxPath);
 
 	return pszRelayFilePath;
 }
@@ -733,14 +733,14 @@ int USmtpCleanupError(SMTPError *pSMTPE)
 	return 0;
 }
 
-char *USmtpGetSMTPError(SMTPError *pSMTPE, char *pszError, int iMaxError)
+char *USmtpGetSMTPError(SMTPError *pSMTPE, char *pszError, size_t sMaxError)
 {
 	char const *pszSmtpErr = (pSMTPE != NULL) ?
 		USmtpGetErrorMessage(pSMTPE): DEFAULT_SMTP_ERR;
 
 	if (IsEmptyString(pszSmtpErr))
 		pszSmtpErr = DEFAULT_SMTP_ERR;
-	StrNCpy(pszError, pszSmtpErr, iMaxError);
+	StrNCpy(pszError, pszSmtpErr, sMaxError);
 
 	return pszError;
 }
@@ -1815,11 +1815,11 @@ int USmtpDnsMapsContained(SYS_INET_ADDR const &PeerInfo, char const *pszMapsServ
 	return SysGetHostByName(szMapsQuery, -1, Addr) < 0 ? 0: 1;
 }
 
-static char *USmtpGetSpammersFilePath(char *pszSpamFilePath, int iMaxPath)
+static char *USmtpGetSpammersFilePath(char *pszSpamFilePath, size_t sMaxPath)
 {
-	CfgGetRootPath(pszSpamFilePath, iMaxPath);
+	CfgGetRootPath(pszSpamFilePath, sMaxPath);
 
-	StrNCat(pszSpamFilePath, SMTP_SPAMMERS_FILE, iMaxPath);
+	StrNCat(pszSpamFilePath, SMTP_SPAMMERS_FILE, sMaxPath);
 
 	return pszSpamFilePath;
 }
@@ -1893,10 +1893,10 @@ int USmtpSpammerCheck(const SYS_INET_ADDR &PeerInfo, char *&pszInfo)
 	return 0;
 }
 
-static char *USmtpGetSpamAddrFilePath(char *pszSpamFilePath, int iMaxPath)
+static char *USmtpGetSpamAddrFilePath(char *pszSpamFilePath, size_t sMaxPath)
 {
-	CfgGetRootPath(pszSpamFilePath, iMaxPath);
-	StrNCat(pszSpamFilePath, SMTP_SPAM_ADDRESS_FILE, iMaxPath);
+	CfgGetRootPath(pszSpamFilePath, sMaxPath);
+	StrNCat(pszSpamFilePath, SMTP_SPAM_ADDRESS_FILE, sMaxPath);
 
 	return pszSpamFilePath;
 }

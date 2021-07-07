@@ -64,8 +64,8 @@ int MscDatumAlloc(Datum *pDm, void const *pData, size_t sSize);
 LstDatum *MscLstDatumAlloc(void const *pData, size_t sSize);
 int MscLstDatumAddT(SysListHead *pHead, void const *pData, size_t sSize);
 void MscFreeDatumList(SysListHead *pHead);
-int MscUniqueFile(char const *pszDir, char *pszFilePath, int iMaxPath);
-void MscSafeGetTmpFile(char *pszPath, int iMaxPath);
+int MscUniqueFile(char const *pszDir, char *pszFilePath, size_t sMaxPath);
+void MscSafeGetTmpFile(char *pszPath, size_t sMaxPath);
 int MscRecvTextFile(char const *pszFileName, BSOCK_HANDLE hBSock, int iTimeout,
 		    int (*pStopProc) (void *) = NULL, void *pParam = NULL);
 ssize_t MscSendTextFile(char const *pszFileName, BSOCK_HANDLE hBSock, int iTimeout,
@@ -92,7 +92,7 @@ int MscCopyFile(FILE *pFileOut, FILE *pFileIn, SYS_OFF_T llBaseOffset,
 		SYS_OFF_T llCopySize);
 int MscDos2UnixFile(FILE *pFileOut, FILE *pFileIn);
 int MscMoveFile(char const *pszOldName, char const *pszNewName);
-char *MscGetString(FILE *pFile, char *pszBuffer, int iMaxChars,
+char *MscGetString(FILE *pFile, char *pszBuffer, size_t sMaxChars,
 		   int *piGotNL = NULL);
 char *MscFGets(char *pszLine, int iLineSize, FILE *pFile);
 char *MscGetConfigLine(char *pszLine, int iLineSize, FILE *pFile, bool bSkipComments = true);

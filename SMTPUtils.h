@@ -99,7 +99,7 @@ int USmtpSetError(SMTPError *pSMTPE, int iSTMPResponse, char const *pszSTMPRespo
 bool USmtpIsFatalError(SMTPError const *pSMTPE);
 char const *USmtpGetErrorMessage(SMTPError const *pSMTPE);
 int USmtpCleanupError(SMTPError *pSMTPE);
-char *USmtpGetSMTPError(SMTPError *pSMTPE, char *pszError, int iMaxError);
+char *USmtpGetSMTPError(SMTPError *pSMTPE, char *pszError, size_t sMaxError);
 char *USmtpGetSMTPRmtMsgID(char const *pszAckDATA, char *pszRmtMsgID, ssize_t sMaxMsg);
 char const *USmtpGetErrorServer(SMTPError const *pSMTPE);
 SMTPCH_HANDLE USmtpCreateChannel(SMTPGateway const *pGw, char const *pszDomain,

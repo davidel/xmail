@@ -59,11 +59,11 @@ struct ServerConfigData {
 };
 
 
-static char *SvrGetProfileFilePath(char *pszFilePath, int iMaxPath)
+static char *SvrGetProfileFilePath(char *pszFilePath, size_t sMaxPath)
 {
-	CfgGetRootPath(pszFilePath, iMaxPath);
+	CfgGetRootPath(pszFilePath, sMaxPath);
 
-	StrNCat(pszFilePath, SVR_PROFILE_FILE, iMaxPath);
+	StrNCat(pszFilePath, SVR_PROFILE_FILE, sMaxPath);
 
 	return pszFilePath;
 }
@@ -351,23 +351,23 @@ int SvrGetMessageID(SYS_UINT64 *pullMessageID)
 	return 0;
 }
 
-char *SvrGetLogsDir(char *pszLogsPath, int iMaxPath)
+char *SvrGetLogsDir(char *pszLogsPath, size_t sMaxPath)
 {
-	CfgGetRootPath(pszLogsPath, iMaxPath);
-	StrNCat(pszLogsPath, SVR_LOGS_DIR, iMaxPath);
+	CfgGetRootPath(pszLogsPath, sMaxPath);
+	StrNCat(pszLogsPath, SVR_LOGS_DIR, sMaxPath);
 
 	return pszLogsPath;
 }
 
-char *SvrGetSpoolDir(char *pszSpoolPath, int iMaxPath)
+char *SvrGetSpoolDir(char *pszSpoolPath, size_t sMaxPath)
 {
-	CfgGetRootPath(pszSpoolPath, iMaxPath);
-	StrNCat(pszSpoolPath, SMTP_SPOOL_DIR, iMaxPath);
+	CfgGetRootPath(pszSpoolPath, sMaxPath);
+	StrNCat(pszSpoolPath, SMTP_SPOOL_DIR, sMaxPath);
 
 	return pszSpoolPath;
 }
 
-int SvrConfigVar(const char *pszVarName, char *pszVarValue, int iMaxVarValue,
+int SvrConfigVar(const char *pszVarName, char *pszVarValue, size_t sMaxVarValue,
 		 SVRCFG_HANDLE hSvrConfig, const char *pszDefault)
 {
 	int iReleaseConfig = 0;
@@ -389,8 +389,8 @@ int SvrConfigVar(const char *pszVarName, char *pszVarValue, int iMaxVarValue,
 		return ERR_CFG_VAR_NOT_FOUND;
 	}
 
-	strncpy(pszVarValue, pszValue, iMaxVarValue - 1);
-	pszVarValue[iMaxVarValue - 1] = '\0';
+	strncpy(pszVarValue, pszValue, sMaxVarValue - 1);
+	pszVarValue[sMaxVarValue - 1] = '\0';
 
 	SysFree(pszValue);
 	if (iReleaseConfig)
@@ -443,22 +443,23 @@ int SvrCheckVirtMemSpace(unsigned long ulMinSpace)
 	return 0;
 }
 
-static char *SvrGetProtoIPPropFile(const char *pszProto, char *pszFileName, int iMaxName)
+static char *SvrGetProtoIPPropFile(const char *pszProto, char *pszFileName, size_t sMaxName)
 {
 	char szMailRoot[SYS_MAX_PATH] = "";
 
 	CfgGetRootPath(szMailRoot, sizeof(szMailRoot));
-	SysSNPrintf(pszFileName, iMaxName, "%s%s.ipprop.tab", szMailRoot, pszProto);
+	SysSNPrintf(pszFileName, sMaxName, "%s%s.ipprop.tab", szMailRoot, pszProto);
 
 	return pszFileName;
 }
 
-static char *SvrGetProtoHNPropFile(const char *pszProto, char *pszFileName, int iMaxName)
+static char *SvrGetProtoHNPropFile(const char *pszProto, char *pszFileName,
+				   size_t sMaxName)
 {
 	char szMailRoot[SYS_MAX_PATH] = "";
 
 	CfgGetRootPath(szMailRoot, sizeof(szMailRoot));
-	SysSNPrintf(pszFileName, iMaxName, "%s%s.hnprop.tab", szMailRoot, pszProto);
+	SysSNPrintf(pszFileName, sMaxName, "%s%s.hnprop.tab", szMailRoot, pszProto);
 
 	return pszFileName;
 }
@@ -521,4 +522,3 @@ int SvrEnumProtoProps(const char *pszProto, const SYS_INET_ADDR *pPeerInfo,
 
 	return 0;
 }
-

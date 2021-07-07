@@ -34,7 +34,7 @@ struct LMAILConfig {
 
 };
 
-char *LMAILGetSpoolDir(char *pszSpoolPath, int iMaxPath);
+char *LMAILGetSpoolDir(char *pszSpoolPath, size_t sMaxPath);
 unsigned int LMAILThreadProc(void *pThreadData);
 
 #endif

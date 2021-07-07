@@ -218,32 +218,33 @@ char *FilGetFilterRejMessage(char const *pszSpoolFile)
 	return SysStrDup(szRejMsg);
 }
 
-static int FilGetFilePath(char const *pszMode, char *pszFilePath, int iMaxPath)
+static int FilGetFilePath(char const *pszMode, char *pszFilePath, size_t sMaxPath)
 {
 	char szMailRootPath[SYS_MAX_PATH] = "";
 
 	CfgGetRootPath(szMailRootPath, sizeof(szMailRootPath));
 
-	SysSNPrintf(pszFilePath, iMaxPath - 1, "%sfilters.%s.tab", szMailRootPath, pszMode);
+	SysSNPrintf(pszFilePath, sMaxPath - 1, "%sfilters.%s.tab", szMailRootPath, pszMode);
 
 	return 0;
 }
 
-static int FilAddFilter(char **ppszFilters, int &iNumFilters, char const *pszFilterName)
+static int FilAddFilter(char **ppszFilters, size_t &sNumFilters, char const *pszFilterName)
 {
-	for (int ii = 0; ii < iNumFilters; ii++)
+	for (int ii = 0; ii < sNumFilters; ii++)
 		if (strcmp(ppszFilters[ii], pszFilterName) == 0)
 			return 0;
 
-	if ((ppszFilters[iNumFilters] = SysStrDup(pszFilterName)) == NULL)
+	if ((ppszFilters[sNumFilters] = SysStrDup(pszFilterName)) == NULL)
 		return ErrGetErrorCode();
-	iNumFilters++;
+	sNumFilters++;
 
 	return 0;
 }
 
-static int FilSelectFilters(char const *pszFilterFilePath, char const *pszMode,
-			    FilterMsgInfo const &FMI, char **ppszFilters, int iMaxFilters)
+static ssize_t FilSelectFilters(char const *pszFilterFilePath, char const *pszMode,
+				FilterMsgInfo const &FMI, char **ppszFilters,
+				size_t sMaxFilters)
 {
 	/* Share lock the filter table file */
 	char szResLock[SYS_MAX_PATH] = "";
@@ -261,10 +262,10 @@ static int FilSelectFilters(char const *pszFilterFilePath, char const *pszMode,
 		return 0;
 	}
 
-	int iNumFilters = 0;
+	size_t sNumFilters = 0;
 	char szLine[FILTER_DB_LINE_MAX] = "";
 
-	while ((iNumFilters < iMaxFilters) &&
+	while ((sNumFilters < sMaxFilters) &&
 	       (MscGetConfigLine(szLine, sizeof(szLine) - 1, pFile) != NULL)) {
 		char **ppszTokens = StrGetTabLineStrings(szLine);
 
@@ -284,7 +285,7 @@ static int FilSelectFilters(char const *pszFilterFilePath, char const *pszMode,
 			    (MscLoadAddressFilter(&ppszTokens[filLocalAddr], 1, AFLocal) == 0) &&
 			    MscAddressMatch(AFLocal, FMI.LocalAddr)) {
 
-				FilAddFilter(ppszFilters, iNumFilters, ppszTokens[filFileName]);
+				FilAddFilter(ppszFilters, sNumFilters, ppszTokens[filFileName]);
 
 			}
 		}
@@ -293,22 +294,22 @@ static int FilSelectFilters(char const *pszFilterFilePath, char const *pszMode,
 	fclose(pFile);
 	RLckUnlockSH(hResLock);
 
-	return iNumFilters;
+	return sNumFilters;
 }
 
-static void FilFreeFilters(char **ppszFilters, int iNumFilters)
+static void FilFreeFilters(char **ppszFilters, size_t sNumFilters)
 {
-	for (iNumFilters--; iNumFilters >= 0; iNumFilters--)
-		SysFree(ppszFilters[iNumFilters]);
+	for (; sNumFilters > 0; sNumFilters--)
+		SysFree(ppszFilters[sNumFilters - 1]);
 
 }
 
-static int FilGetFilterPath(char const *pszFileName, char *pszFilePath, int iMaxPath)
+static int FilGetFilterPath(char const *pszFileName, char *pszFilePath, size_t sMaxPath)
 {
 	char szMailRootPath[SYS_MAX_PATH] = "";
 
 	CfgGetRootPath(szMailRootPath, sizeof(szMailRootPath));
-	SysSNPrintf(pszFilePath, iMaxPath - 1, "%s%s%s%s",
+	SysSNPrintf(pszFilePath, sMaxPath - 1, "%s%s%s%s",
 		    szMailRootPath, FILTER_STORAGE_DIR, SYS_SLASH_STR, pszFileName);
 
 	return 0;
@@ -603,17 +604,17 @@ int FilFilterMessage(SPLF_HANDLE hFSpool, QUEUE_HANDLE hQueue,
 		return ErrGetErrorCode();
 
 	/* Select applicable filters */
-	int iNumFilters;
+	ssize_t sNumFilters;
 	char *pszFilters[FILTER_SELECT_MAX];
 
-	if ((iNumFilters = FilSelectFilters(szFilterFilePath, pszMode, FMI, pszFilters,
+	if ((sNumFilters = FilSelectFilters(szFilterFilePath, pszMode, FMI, pszFilters,
 					    CountOf(pszFilters))) < 0) {
 		ErrorPush();
 		FilFreeMsgInfo(FMI);
 		return ErrorPop();
 	}
 	/* Sequentially apply each selected filter */
-	for (int ii = 0; ii < iNumFilters; ii++) {
+	for (ssize_t ii = 0; ii < sNumFilters; ii++) {
 		int iFilterResult;
 		char szFilterPath[SYS_MAX_PATH] = "";
 
@@ -622,7 +623,7 @@ int FilFilterMessage(SPLF_HANDLE hFSpool, QUEUE_HANDLE hQueue,
 		if ((iFilterResult = FilApplyFilter(szFilterPath, hFSpool, hQueue,
 						    hMessage, FMI, pszMode)) < 0) {
 			ErrorPush();
-			FilFreeFilters(pszFilters, iNumFilters);
+			FilFreeFilters(pszFilters, sNumFilters);
 			FilFreeMsgInfo(FMI);
 			return ErrorPop();
 		}
@@ -630,7 +631,7 @@ int FilFilterMessage(SPLF_HANDLE hFSpool, QUEUE_HANDLE hQueue,
 		if (iFilterResult > 0)
 			break;
 	}
-	FilFreeFilters(pszFilters, iNumFilters);
+	FilFreeFilters(pszFilters, sNumFilters);
 	FilFreeMsgInfo(FMI);
 
 	return 0;

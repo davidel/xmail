@@ -49,12 +49,12 @@
 static int LMAILThreadCountAdd(long lCount, SHB_HANDLE hShbLMAIL, LMAILConfig *pLMAILCfg = NULL);
 static int LMAILLogEnabled(SHB_HANDLE hShbLMAIL, LMAILConfig *pLMAILCfg = NULL);
 
-char *LMAILGetSpoolDir(char *pszSpoolPath, int iMaxPath)
+char *LMAILGetSpoolDir(char *pszSpoolPath, size_t sMaxPath)
 {
-	SvrGetSpoolDir(pszSpoolPath, iMaxPath);
+	SvrGetSpoolDir(pszSpoolPath, sMaxPath);
 
 	AppendSlash(pszSpoolPath);
-	StrNCat(pszSpoolPath, LOCAL_SPOOL_DIR, iMaxPath);
+	StrNCat(pszSpoolPath, LOCAL_SPOOL_DIR, sMaxPath);
 
 	return pszSpoolPath;
 }
@@ -523,4 +523,3 @@ unsigned int LMAILThreadProc(void *pThreadData)
 
 	return 0;
 }
-

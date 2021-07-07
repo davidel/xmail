@@ -59,7 +59,7 @@ struct DomainsScanData {
 };
 
 static int MDomRebuildDomainsIndexes(char const *pszDomainsFilePath);
-static char *MDomGetDomainsFilePath(char *pszDomainsFilePath, int iMaxPath);
+static char *MDomGetDomainsFilePath(char *pszDomainsFilePath, size_t sMaxPath);
 
 static int iIdxDomains_Domain[] = {
 	domDomain,
@@ -89,7 +89,7 @@ static int MDomRebuildDomainsIndexes(char const *pszDomainsFilePath)
 	return 0;
 }
 
-char *MDomGetDomainPath(char const *pszDomain, char *pszDomainPath, int iMaxPath, int iFinalSlash)
+char *MDomGetDomainPath(char const *pszDomain, char *pszDomainPath, size_t sMaxPath, int iFinalSlash)
 {
 	/* Make the domain lower-case */
 	char szLoDomain[SYS_MAX_PATH] = "";
@@ -97,11 +97,11 @@ char *MDomGetDomainPath(char const *pszDomain, char *pszDomainPath, int iMaxPath
 	StrSNCpy(szLoDomain, pszDomain);
 	StrLower(szLoDomain);
 
-	CfgGetRootPath(pszDomainPath, iMaxPath);
+	CfgGetRootPath(pszDomainPath, sMaxPath);
 
-	StrNCat(pszDomainPath, MAIL_DOMAINS_DIR, iMaxPath);
+	StrNCat(pszDomainPath, MAIL_DOMAINS_DIR, sMaxPath);
 	AppendSlash(pszDomainPath);
-	StrNCat(pszDomainPath, szLoDomain, iMaxPath);
+	StrNCat(pszDomainPath, szLoDomain, sMaxPath);
 
 	if (iFinalSlash)
 		AppendSlash(pszDomainPath);
@@ -109,11 +109,11 @@ char *MDomGetDomainPath(char const *pszDomain, char *pszDomainPath, int iMaxPath
 	return pszDomainPath;
 }
 
-static char *MDomGetDomainsFilePath(char *pszDomainsFilePath, int iMaxPath)
+static char *MDomGetDomainsFilePath(char *pszDomainsFilePath, size_t sMaxPath)
 {
-	CfgGetRootPath(pszDomainsFilePath, iMaxPath);
+	CfgGetRootPath(pszDomainsFilePath, sMaxPath);
 
-	StrNCat(pszDomainsFilePath, MAIL_DOMAINS_FILE, iMaxPath);
+	StrNCat(pszDomainsFilePath, MAIL_DOMAINS_FILE, sMaxPath);
 
 	return pszDomainsFilePath;
 }
@@ -445,11 +445,11 @@ char const *MDomGetNextDomain(DOMLS_HANDLE hDomainsDB)
 	return pszDomain;
 }
 
-int MDomGetClientDomain(char const *pszFQDN, char *pszClientDomain, int iMaxDomain)
+int MDomGetClientDomain(char const *pszFQDN, char *pszClientDomain, size_t sMaxDomain)
 {
 	for (; pszFQDN != NULL;) {
 		if (MDomIsHandledDomain(pszFQDN) == 0) {
-			StrNCpy(pszClientDomain, pszFQDN, iMaxDomain);
+			StrNCpy(pszClientDomain, pszFQDN, sMaxDomain);
 
 			return 0;
 		}
@@ -471,4 +471,3 @@ int MDomIsHandledDomain(char const *pszDomain)
 
 	return MDomLookupDomain(pszDomain);
 }
-
