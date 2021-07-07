@@ -43,6 +43,8 @@
 #define Max(a, b)                   (((a) > (b)) ? (a): (b))
 #define Abs(v)                      (((v) > 0) ? (v): -(v))
 
+typedef SSIZE_T                    ssize_t;
+
 int SysFileSync(FILE * pFile)
 {
 	if (fflush(pFile) || _commit(_fileno(pFile)))
