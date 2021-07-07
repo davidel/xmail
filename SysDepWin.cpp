@@ -339,8 +339,8 @@ static int SysSetSocketsOptions(SYS_SOCKET SockFD)
 
 SYS_SOCKET SysCreateSocket(int iAddressFamily, int iType, int iProtocol)
 {
-	SOCKET SockFD = WSASocket(iAddressFamily, iType, iProtocol, NULL, 0,
-				  WSA_FLAG_OVERLAPPED);
+	SOCKET SockFD = WSASocketW(iAddressFamily, iType, iProtocol, NULL, 0,
+				   WSA_FLAG_OVERLAPPED);
 
 	if (SockFD == INVALID_SOCKET) {
 		ErrSetErrorCode(ERR_SOCKET_CREATE);
@@ -1087,17 +1087,17 @@ SYS_THREAD SysCreateThread(unsigned int (*pThreadProc) (void *), void *pThreadDa
 
 	/* Create the thread */
 	unsigned int uThreadId = 0;
-	unsigned long ulThread = _beginthreadex(NULL, 0,
-						(unsigned (__stdcall *) (void *)) SysThreadRunner,
-						pTR, 0, &uThreadId);
+	size_t sThread = _beginthreadex(NULL, 0,
+					(unsigned (__stdcall *) (void *)) SysThreadRunner,
+					pTR, 0, &uThreadId);
 
-	if (ulThread == 0) {
+	if (sThread == 0) {
 		SysFree(pTR);
 		ErrSetErrorCode(ERR_BEGINTHREADEX);
 		return SYS_INVALID_THREAD;
 	}
 
-	return (SYS_THREAD) ulThread;
+	return (SYS_THREAD) sThread;
 }
 
 void SysCloseThread(SYS_THREAD ThreadID, int iForce)
@@ -1153,12 +1153,13 @@ unsigned long SysGetCurrentThreadId(void)
 int SysExec(char const *pszCommand, char const *const *pszArgs, int iWaitTimeout,
 	    int iPriority, int *piExitStatus)
 {
-	int i, iCommandLength = strlen(pszCommand) + 4;
+	size_t sCommandLength = strlen(pszCommand) + 4;
+	int i;
 
 	for (i = 1; pszArgs[i] != NULL; i++)
-		iCommandLength += strlen(pszArgs[i]) + 4;
+		sCommandLength += strlen(pszArgs[i]) + 4;
 
-	char *pszCmdLine = (char *) SysAlloc(iCommandLength + 1);
+	char *pszCmdLine = (char *) SysAlloc(sCommandLength + 1);
 
 	if (pszCmdLine == NULL)
 		return ErrGetErrorCode();
@@ -1376,7 +1377,7 @@ int SysLockFile(char const *pszFileName, char const *pszLockExt)
 	char szLock[128];
 
 	sprintf(szLock, "%lu", (unsigned long) GetCurrentThreadId());
-	if (!WriteFile(hFile, szLock, strlen(szLock) + 1, &dwWritten, NULL)) {
+	if (!WriteFile(hFile, szLock, (DWORD) strlen(szLock) + 1, &dwWritten, NULL)) {
 		CloseHandle(hFile);
 		ErrSetErrorCode(ERR_FILE_WRITE);
 		return ERR_FILE_WRITE;
@@ -1675,11 +1676,11 @@ int SysSetFileModTime(char const *pszFileName, time_t tMod)
 
 char *SysStrDup(char const *pszString)
 {
-	int iStrLength = strlen(pszString);
-	char *pszBuffer = (char *) SysAllocNZ(iStrLength + 1);
+	size_t sStrLength = strlen(pszString);
+	char *pszBuffer = (char *) SysAllocNZ(sStrLength + 1);
 
 	if (pszBuffer != NULL)
-		memcpy(pszBuffer, pszString, iStrLength + 1);
+		memcpy(pszBuffer, pszString, sStrLength + 1);
 
 	return pszBuffer;
 }
