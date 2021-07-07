@@ -330,7 +330,7 @@ static SYS_UINT8 *DNS_QuerySendStream(char const *pszDNSServer, int iPortNo, int
 				  &SockAddr, iTimeout) < 0)
 		return NULL;
 
-	SYS_UINT16 QLenght = (SYS_UINT16) htons(sQLenght);
+	SYS_UINT16 QLenght = (SYS_UINT16) htons((SYS_UINT16) sQLenght);
 
 	/* Send packet lenght */
 	if (SysSend(SockFD, (char *) &QLenght, sizeof(QLenght),

@@ -481,7 +481,7 @@ ssize_t SysRecvData(SYS_SOCKET SockFD, char *pszBuffer, size_t sBufferSize, int 
 
 ssize_t SysRecv(SYS_SOCKET SockFD, char *pszBuffer, size_t sBufferSize, int iTimeout)
 {
-	ssize_t sRtxBytes = 0;
+	size_t sRtxBytes = 0;
 
 	while (sRtxBytes < sBufferSize) {
 		ssize_t sRtxCurrent = SysRecvData(SockFD, pszBuffer + sRtxBytes,

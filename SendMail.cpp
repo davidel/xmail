@@ -354,7 +354,7 @@ static int GetTime(struct tm &tmLocal, int &iDiffHours, int &iDiffMins, time_t t
 	return 0;
 }
 
-char *MscStrftime(struct tm const *ptmTime, char *pszDateStr, int iSize)
+char *MscStrftime(struct tm const *ptmTime, char *pszDateStr, size_t sSize)
 {
 	static char const * const pszWDays[] = {
 		"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"
@@ -364,7 +364,7 @@ char *MscStrftime(struct tm const *ptmTime, char *pszDateStr, int iSize)
 		"Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
 	};
 
-	SysSNPrintf(pszDateStr, iSize, "%s, %d %s %d %02d:%02d:%02d",
+	SysSNPrintf(pszDateStr, sSize, "%s, %d %s %d %02d:%02d:%02d",
 		    pszWDays[ptmTime->tm_wday], ptmTime->tm_mday,
 		    pszMonths[ptmTime->tm_mon], ptmTime->tm_year + 1900,
 		    ptmTime->tm_hour, ptmTime->tm_min, ptmTime->tm_sec);
@@ -717,18 +717,18 @@ int main(int iArgCount, char *pszArgs[])
 	/* Append data file */
 	rewind(pDataFile);
 
-	unsigned int uReaded;
+	ssize_t sBytesRead;
 
 	do {
-		if ((uReaded = fread(szBuffer, 1, sizeof(szBuffer), pDataFile)) != 0 &&
-		    fwrite(szBuffer, 1, uReaded, pMailFile) != uReaded) {
+		if ((sBytesRead = fread(szBuffer, 1, sizeof(szBuffer), pDataFile)) != 0 &&
+		    fwrite(szBuffer, 1, sBytesRead, pMailFile) != sBytesRead) {
 			perror(szMailFile);
 			fclose(pDataFile), remove(szDataFile);
 			fclose(pMailFile), remove(szMailFile);
 			return 8;
 		}
 
-	} while (uReaded == sizeof(szBuffer));
+	} while (sBytesRead == sizeof(szBuffer));
 	fclose(pDataFile), remove(szDataFile);
 
 	/* Sync and close the mail file */
