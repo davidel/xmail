@@ -664,12 +664,12 @@ char const *StrDynGet(DynString *pDS)
 	return pDS->pszBuffer;
 }
 
-char *StrDynDrop(DynString *pDS, int *piSize)
+char *StrDynDrop(DynString *pDS, size_t *pSize)
 {
 	char *pszBuffer = pDS->pszBuffer;
 
-	if (piSize != NULL)
-		*piSize = pDS->sStringSize;
+	if (pSize != NULL)
+		*pSize = pDS->sStringSize;
 	pszBuffer[pDS->sStringSize] = '\0';
 	pDS->pszBuffer = NULL;
 
@@ -730,21 +730,21 @@ char *StrNDup(char const *pszStr, int iSize)
 
 int StrParamGet(char const *pszBuffer, char const *pszName, char *pszVal, int iMaxVal)
 {
-	int iNameLen = strlen(pszName), iParamSize;
+	size_t sNameLen = strlen(pszName), sParamSize;
 	char const *pszTmp, *pszEnd;
 
 	for (pszTmp = pszBuffer; (pszTmp = strstr(pszTmp, pszName)) != NULL; pszTmp++) {
 		if ((pszTmp > pszBuffer) && (pszTmp[-1] != ','))
 			continue;
-		if (pszTmp[iNameLen] != '=')
+		if (pszTmp[sNameLen] != '=')
 			continue;
-		pszTmp += iNameLen + 1;
+		pszTmp += sNameLen + 1;
 		if ((pszEnd = strchr(pszTmp, ',')) == NULL)
 			pszEnd = pszTmp + strlen(pszTmp);
-		iParamSize = (int) (pszEnd - pszTmp);
-		iParamSize = Min(iMaxVal - 1, iParamSize);
+		sParamSize = (size_t) (pszEnd - pszTmp);
+		sParamSize = Min(iMaxVal - 1, sParamSize);
 
-		Cpy2Sz(pszVal, pszTmp, iParamSize);
+		Cpy2Sz(pszVal, pszTmp, sParamSize);
 
 		return 1;
 	}
@@ -752,10 +752,10 @@ int StrParamGet(char const *pszBuffer, char const *pszName, char *pszVal, int iM
 	return 0;
 }
 
-char *StrMacSubst(char const *pszIn, int *piSize,
+char *StrMacSubst(char const *pszIn, size_t *pSize,
 		  char *(*pLkupProc)(void *, char const *, int), void *pPriv)
 {
-	int i, j;
+	ssize_t i, j;
 	char *pszLkup = NULL;
 	char const *pszVarS, *pszVarE;
 	DynString DynS;
@@ -792,7 +792,7 @@ char *StrMacSubst(char const *pszIn, int *piSize,
 	if (j && StrDynAdd(&DynS, szBuf, j) < 0)
 		goto ErrorExit;
 
-	return StrDynDrop(&DynS, piSize);
+	return StrDynDrop(&DynS, pSize);
 
 ErrorExit:
 	SysFree(pszLkup);

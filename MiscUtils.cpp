@@ -1432,17 +1432,17 @@ int MscIsIPDomain(char const *pszDomain, char *pszIP, int iIPSize)
 	return 1;
 }
 
-static char *MscMacroReplace(char const *pszIn, int *piSize,
+static char *MscMacroReplace(char const *pszIn, size_t *pSize,
 			     char *(*pLkupProc)(void *, char const *, int), void *pPriv)
 {
 	char *pszLkup;
 
 	if (strncmp(pszIn, "@@", 2) != 0)
-		return StrMacSubst(pszIn, piSize, pLkupProc, pPriv);
+		return StrMacSubst(pszIn, pSize, pLkupProc, pPriv);
 	if ((pszLkup = (*pLkupProc)(pPriv, pszIn + 2, strlen(pszIn + 2))) == NULL)
 		return NULL;
-	if (piSize != NULL)
-		*piSize = strlen(pszLkup);
+	if (pSize != NULL)
+		*pSize = strlen(pszLkup);
 
 	return pszLkup;
 }

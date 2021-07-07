@@ -68,7 +68,7 @@ struct FilterMacroSubstCtx {
 };
 
 
-static char *FilGetLogExecStr(FilterLogInfo const *pFLI, int *piSize)
+static char *FilGetLogExecStr(FilterLogInfo const *pFLI, size_t *pSize)
 {
 	int i;
 	DynString DynS;
@@ -83,7 +83,7 @@ static char *FilGetLogExecStr(FilterLogInfo const *pFLI, int *piSize)
 		}
 	}
 
-	return StrDynDrop(&DynS, piSize);
+	return StrDynDrop(&DynS, pSize);
 }
 
 int FilLogFilter(FilterLogInfo const *pFLI)
@@ -635,4 +635,3 @@ int FilFilterMessage(SPLF_HANDLE hFSpool, QUEUE_HANDLE hQueue,
 
 	return 0;
 }
-

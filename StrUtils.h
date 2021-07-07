@@ -64,13 +64,13 @@ int StrDynInit(DynString *pDS, char const *pszInit = NULL);
 int StrDynFree(DynString *pDS);
 int StrDynTruncate(DynString *pDS);
 char const *StrDynGet(DynString *pDS);
-char *StrDynDrop(DynString *pDS, int *piSize);
+char *StrDynDrop(DynString *pDS, size_t *pSize);
 int StrDynSize(DynString *pDS);
 int StrDynAdd(DynString *pDS, char const *pszBuffer, ssize_t sStringSize = -1);
 int StrDynPrint(DynString *pDS, char const *pszFormat, ...);
 char *StrNDup(char const *pszStr, int iSize);
 int StrParamGet(char const *pszBuffer, char const *pszName, char *pszVal, int iMaxVal);
-char *StrMacSubst(char const *pszIn, int *piSize,
+char *StrMacSubst(char const *pszIn, size_t *pSize,
 		  char *(*pLkupProc)(void *, char const *, int), void *pPriv);
 
 #endif
