@@ -588,7 +588,7 @@ static int UsrAliasLookupNameLK(char const *pszAlsFilePath, char const *pszDomai
 			if (iFieldsCount >= alsMax &&
 			    StrIWildMatch(pszDomain, ppszTabTokens[alsDomain]) &&
 			    StrIWildMatch(pszAlias, ppszTabTokens[alsAlias])) {
-				size_t sLength = strlen(ppszTabTokens[alsDomain]) +
+				ssize_t sLength = strlen(ppszTabTokens[alsDomain]) +
 					strlen(ppszTabTokens[alsAlias]);
 
 				if (sLength > sMaxLength) {

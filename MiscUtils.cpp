@@ -188,8 +188,8 @@ int MscRecvTextFile(char const *pszFileName, BSOCK_HANDLE hBSock, int iTimeout,
 	return 0;
 }
 
-int MscSendTextFile(char const *pszFileName, BSOCK_HANDLE hBSock, int iTimeout,
-		    int (*pStopProc) (void *), void *pParam)
+ssize_t MscSendTextFile(char const *pszFileName, BSOCK_HANDLE hBSock, int iTimeout,
+			int (*pStopProc) (void *), void *pParam)
 {
 	FILE *pFile = fopen(pszFileName, "rt");
 	char szBuffer[2048];
@@ -200,7 +200,7 @@ int MscSendTextFile(char const *pszFileName, BSOCK_HANDLE hBSock, int iTimeout,
 	}
 	while (MscFGets(szBuffer, sizeof(szBuffer) - 1, pFile) != NULL) {
 		if (szBuffer[0] == '.')
-			for (int i = strlen(szBuffer); i >= 0; i--)
+			for (ssize_t i = strlen(szBuffer); i >= 0; i--)
 				szBuffer[i + 1] = szBuffer[i];
 
 		if (BSckSendString(hBSock, szBuffer, iTimeout) <= 0) {
@@ -224,7 +224,7 @@ int MscSendTextFile(char const *pszFileName, BSOCK_HANDLE hBSock, int iTimeout,
 
 int MscSendFileCRLF(char const *pszFilePath, BSOCK_HANDLE hBSock, int iTimeout)
 {
-	int iLength;
+	size_t sLength;
 	FILE *pFile;
 	char szBuffer[2048];
 
@@ -233,15 +233,15 @@ int MscSendFileCRLF(char const *pszFilePath, BSOCK_HANDLE hBSock, int iTimeout)
 		return ERR_FILE_OPEN;
 	}
 	while (fgets(szBuffer, sizeof(szBuffer) - 1, pFile) != NULL) {
-		iLength = strlen(szBuffer);
-		if (szBuffer[iLength - 1] == '\r')
-			szBuffer[iLength++] = '\n';
-		else if (szBuffer[iLength - 1] == '\n' &&
-			 (iLength < 2 || szBuffer[iLength - 2] != '\r')) {
-			szBuffer[iLength - 1] = '\r';
-			szBuffer[iLength++] = '\n';
+		sLength = strlen(szBuffer);
+		if (szBuffer[sLength - 1] == '\r')
+			szBuffer[sLength++] = '\n';
+		else if (szBuffer[sLength - 1] == '\n' &&
+			 (sLength < 2 || szBuffer[sLength - 2] != '\r')) {
+			szBuffer[sLength - 1] = '\r';
+			szBuffer[sLength++] = '\n';
 		}
-		if (BSckSendData(hBSock, szBuffer, iLength, iTimeout) < 0) {
+		if (BSckSendData(hBSock, szBuffer, sLength, iTimeout) < 0) {
 			fclose(pFile);
 			return ErrGetErrorCode();
 		}
@@ -656,14 +656,14 @@ int MscCopyFile(FILE *pFileOut, FILE *pFileIn, SYS_OFF_T llBaseOffset,
 
 int MscDos2UnixFile(FILE *pFileOut, FILE *pFileIn)
 {
-	int iLength;
+	size_t sLength;
 	char szBuffer[2048];
 
 	while (fgets(szBuffer, sizeof(szBuffer), pFileIn) != NULL) {
-		iLength = strlen(szBuffer);
-		if (szBuffer[iLength - 1] == '\r')
-			szBuffer[iLength - 1] = '\n';
-		if (fwrite(szBuffer, 1, iLength, pFileOut) != iLength) {
+		sLength = strlen(szBuffer);
+		if (szBuffer[sLength - 1] == '\r')
+			szBuffer[sLength - 1] = '\n';
+		if (fwrite(szBuffer, 1, sLength, pFileOut) != sLength) {
 			ErrSetErrorCode(ERR_FILE_WRITE);
 			return ERR_FILE_WRITE;
 		}
@@ -686,17 +686,17 @@ int MscMoveFile(char const *pszOldName, char const *pszNewName)
 
 char *MscGetString(FILE *pFile, char *pszBuffer, int iMaxChars, int *piGotNL)
 {
-	int iLength;
+	size_t sLength;
 
 	if (fgets(pszBuffer, iMaxChars, pFile) == NULL)
 		return NULL;
-	iLength = strlen(pszBuffer);
+	sLength = strlen(pszBuffer);
 	if (piGotNL != NULL)
-		*piGotNL = (iLength > 0 &&
-			    strchr("\r\n", pszBuffer[iLength - 1]) != NULL);
-	for (; iLength > 0 && strchr("\r\n", pszBuffer[iLength - 1]) != NULL;
-	     iLength--);
-	pszBuffer[iLength] = '\0';
+		*piGotNL = (sLength > 0 &&
+			    strchr("\r\n", pszBuffer[sLength - 1]) != NULL);
+	for (; sLength > 0 && strchr("\r\n", pszBuffer[sLength - 1]) != NULL;
+	     sLength--);
+	pszBuffer[sLength] = '\0';
 
 	return pszBuffer;
 }
@@ -1203,17 +1203,18 @@ int MscMD5Authenticate(char const *pszPassword, char const *pszTimeStamp, char c
 	return 0;
 }
 
-char *MscExtractServerTimeStamp(char const *pszResponse, char *pszTimeStamp, int iMaxTimeStamp)
+char *MscExtractServerTimeStamp(char const *pszResponse, char *pszTimeStamp,
+				size_t sMaxTimeStamp)
 {
-	int iLengthTS;
+	size_t sLengthTS;
 	char const *pszStartTS, *pszEndTS;
 
 	if ((pszStartTS = strchr(pszResponse, '<')) == NULL ||
 	    (pszEndTS = strchr(pszStartTS + 1, '>')) == NULL)
 		return NULL;
-	iLengthTS = (int) (pszEndTS - pszStartTS) + 1;
-	iLengthTS = Min(iLengthTS, iMaxTimeStamp - 1);
-	Cpy2Sz(pszTimeStamp, pszStartTS, iLengthTS);
+	sLengthTS = (size_t) (pszEndTS - pszStartTS) + 1;
+	sLengthTS = Min(sLengthTS, sMaxTimeStamp - 1);
+	Cpy2Sz(pszTimeStamp, pszStartTS, sLengthTS);
 
 	return pszTimeStamp;
 }

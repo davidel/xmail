@@ -1018,11 +1018,11 @@ int USmlCreateMBFile(UserInfo *pUI, char const *pszFileName, SPLF_HANDLE hFSpool
 			char *pszRetPath = USmlAddrConcat(ppszFrom);
 
 			if (pszRetPath != NULL) {
-				int iRetLength = strlen(pszRetPath);
-				int iExtraLength = CStringSize("Return-Path: <>");
+				size_t sRetLength = strlen(pszRetPath);
+				size_t sExtraLength = CStringSize("Return-Path: <>");
 
-				if (iRetLength > (int) (sizeof(szReturnPath) - iExtraLength - 2))
-					pszRetPath[sizeof(szReturnPath) - iExtraLength - 2] =
+				if (sRetLength > (sizeof(szReturnPath) - sExtraLength - 2))
+					pszRetPath[sizeof(szReturnPath) - sExtraLength - 2] =
 						'\0';
 
 				SysSNPrintf(szReturnPath, sizeof(szReturnPath) - 1,

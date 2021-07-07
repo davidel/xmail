@@ -271,7 +271,7 @@ int QueUtErrLogMessage(QUEUE_HANDLE hQueue, QMSG_HANDLE hMessage, char const *ps
 
 static char *QueUtGetLogEntryVar(char const *pszLog, char const *pszVarName)
 {
-	int iVarLength, iLenght = strlen(pszVarName);
+	size_t sVarLength, sLenght = strlen(pszVarName);
 	char const *pszEPos, *pszTmp, *pszEnd;
 
 	for (pszEPos = pszLog;;) {
@@ -280,7 +280,7 @@ static char *QueUtGetLogEntryVar(char const *pszLog, char const *pszVarName)
 		pszEPos = pszTmp + 1;
 		if (pszTmp > pszLog && pszTmp[-1] != '\n')
 			continue;
-		pszTmp += iLenght;
+		pszTmp += sLenght;
 		StrSkipSpaces(pszTmp);
 		if (*pszTmp == '=') {
 			pszEPos = pszTmp + 1;
@@ -298,14 +298,14 @@ static char *QueUtGetLogEntryVar(char const *pszLog, char const *pszVarName)
 		if (pszEnd[-1] == '"')
 			pszEnd--;
 	}
-	if ((iVarLength = (int) (pszEnd - pszEPos)) <= 0)
+	if ((sVarLength = (size_t) (pszEnd - pszEPos)) <= 0)
 		return NULL;
 
-	char *pszVarValue = (char *) SysAlloc(iVarLength + 1);
+	char *pszVarValue = (char *) SysAlloc(sVarLength + 1);
 
 	if (pszVarValue != NULL) {
-		memcpy(pszVarValue, pszEPos, iVarLength);
-		pszVarValue[iVarLength] = '\0';
+		memcpy(pszVarValue, pszEPos, sVarLength);
+		pszVarValue[sVarLength] = '\0';
 	}
 
 	return pszVarValue;
@@ -887,4 +887,3 @@ int QueUtResendMessage(QUEUE_HANDLE hQueue, QMSG_HANDLE hMessage, SPLF_HANDLE hF
 
 	return iResult;
 }
-

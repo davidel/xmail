@@ -718,7 +718,7 @@ static char *GwLkGetLockFileName(POP3Link const *pPopLnk, char *pszLockFile)
 }
 
 int GwLkGetMsgSyncDbFile(char const *pszRmtDomain, char const *pszRmtName,
-			 char *pszMsgSyncFile, int iMaxPath)
+			 char *pszMsgSyncFile, size_t sMaxPath)
 {
 	char szMsgSyncDir[SYS_MAX_PATH] = "";
 	char szRmtDomain[MAX_HOST_NAME] = "";
@@ -728,14 +728,14 @@ int GwLkGetMsgSyncDbFile(char const *pszRmtDomain, char const *pszRmtName,
 	GwLkSanitizeFileName(pszRmtDomain, szRmtDomain, sizeof(szRmtDomain) - 1);
 	GwLkSanitizeFileName(pszRmtName, szRmtName, sizeof(szRmtName) - 1);
 
-	SysSNPrintf(pszMsgSyncFile, iMaxPath, "%s%s%s", szMsgSyncDir, SYS_SLASH_STR,
+	SysSNPrintf(pszMsgSyncFile, sMaxPath, "%s%s%s", szMsgSyncDir, SYS_SLASH_STR,
 		    szRmtDomain);
 	if (!SysExistDir(pszMsgSyncFile) && SysMakeDir(pszMsgSyncFile) < 0)
 		return ErrGetErrorCode();
 
-	int iLength = strlen(pszMsgSyncFile);
+	size_t sLength = strlen(pszMsgSyncFile);
 
-	SysSNPrintf(pszMsgSyncFile + iLength, iMaxPath - iLength, SYS_SLASH_STR "%s.uidb",
+	SysSNPrintf(pszMsgSyncFile + sLength, sMaxPath - sLength, SYS_SLASH_STR "%s.uidb",
 		    szRmtName);
 
 	return 0;
@@ -860,4 +860,3 @@ int GwLkEnable(char const *pszDomain, char const *pszName,
 
 	return 0;
 }
-

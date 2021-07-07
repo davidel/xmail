@@ -303,7 +303,7 @@ static int SMTPApplyIPProps(SMTPSession &SMTPS)
 
 static int SMTPLogSession(SMTPSession &SMTPS, char const *pszSender,
 			  char const *pszRecipient, char const *pszStatus,
-			  unsigned long ulMsgSize)
+			  size_t sMsgSize)
 {
 	char szTime[256] = "";
 
@@ -327,12 +327,12 @@ static int SMTPLogSession(SMTPSession &SMTPS, char const *pszSender,
 		   "\t\"%s\""
 		   "\t\"%s\""
 		   "\t\"%s\""
-		   "\t\"%lu\""
+		   "\t\"%zu\""
 		   "\t\"%s\""
 		   "\n", SMTPS.szSvrFQDN, SMTPS.szSvrDomain,
 		   SysInetNToA(SMTPS.PeerInfo, szIP, sizeof(szIP)), szTime,
 		   SMTPS.szClientDomain, SMTPS.szDestDomain, pszSender, pszRecipient,
-		   SMTPS.szMessageID, pszStatus, SMTPS.szLogonUser, ulMsgSize,
+		   SMTPS.szMessageID, pszStatus, SMTPS.szLogonUser, sMsgSize,
 		   SMTPS.szClientFQDN);
 
 	RLckUnlockEX(hResLock);
@@ -2197,9 +2197,9 @@ static int SMTPListAuths(DynString *pDS, SMTPSession &SMTPS, int iLinkSSL)
 	return 0;
 }
 
-static int SMTPSendMultilineResponse(BSOCK_HANDLE hBSock, int iTimeout, char const *pszResp)
+static ssize_t SMTPSendMultilineResponse(BSOCK_HANDLE hBSock, int iTimeout, char const *pszResp)
 {
-	int iError;
+	ssize_t sSentSize;
 	char *pszDResp, *pszPtr, *pszPrev, *pszTmp;
 
 	if ((pszDResp = SysStrDup(pszResp)) == NULL)
@@ -2209,11 +2209,11 @@ static int SMTPSendMultilineResponse(BSOCK_HANDLE hBSock, int iTimeout, char con
 		pszPtr[3] = '-';
 	pszPrev[3] = ' ';
 
-	iError = BSckSendData(hBSock, pszDResp, strlen(pszDResp), iTimeout);
+	sSentSize = BSckSendData(hBSock, pszDResp, strlen(pszDResp), iTimeout);
 
 	SysFree(pszDResp);
 
-	return iError;
+	return sSentSize;
 }
 
 static int SMTPHandleCmd_EHLO(char const *pszCommand, BSOCK_HANDLE hBSock, SMTPSession &SMTPS)

@@ -68,8 +68,8 @@ int MscUniqueFile(char const *pszDir, char *pszFilePath, int iMaxPath);
 void MscSafeGetTmpFile(char *pszPath, int iMaxPath);
 int MscRecvTextFile(char const *pszFileName, BSOCK_HANDLE hBSock, int iTimeout,
 		    int (*pStopProc) (void *) = NULL, void *pParam = NULL);
-int MscSendTextFile(char const *pszFileName, BSOCK_HANDLE hBSock, int iTimeout,
-		    int (*pStopProc) (void *) = NULL, void *pParam = NULL);
+ssize_t MscSendTextFile(char const *pszFileName, BSOCK_HANDLE hBSock, int iTimeout,
+			int (*pStopProc) (void *) = NULL, void *pParam = NULL);
 int MscSendFileCRLF(char const *pszFilePath, BSOCK_HANDLE hBSock, int iTimeout);
 char *MscTranslatePath(char *pszPath);
 void *MscLoadFile(char const *pszFilePath, unsigned long *pulFileSize);
@@ -122,7 +122,8 @@ char **MscGetIPProperties(char const *pszFileName, const SYS_INET_ADDR *pPeerInf
 int MscHostSubMatch(char const *pszHostName, char const *pszHostMatch);
 char **MscGetHNProperties(char const *pszFileName, char const *pszHostName);
 int MscMD5Authenticate(char const *pszPassword, char const *pszTimeStamp, char const *pszDigest);
-char *MscExtractServerTimeStamp(char const *pszResponse, char *pszTimeStamp, int iMaxTimeStamp);
+char *MscExtractServerTimeStamp(char const *pszResponse, char *pszTimeStamp,
+				size_t sMaxTimeStamp);
 int MscRootedName(char const *pszHostName);
 int MscCramMD5(char const *pszSecret, char const *pszChallenge, char *pszDigest);
 unsigned long MscHashString(char const *pszBuffer, size_t sLength,

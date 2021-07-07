@@ -781,7 +781,7 @@ static int USmtpResponseClass(int iResponseCode, int iResponseClass)
 
 static int USmtpGetResultCode(char const *pszResult)
 {
-	int i;
+	size_t i;
 	char szResCode[64] = "";
 
 	for (i = 0; (i < sizeof(szResCode)) && isdigit(pszResult[i]); i++)

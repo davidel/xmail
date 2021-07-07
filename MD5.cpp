@@ -165,9 +165,9 @@ void md5_init(md5_ctx_t *mdctx)
 	mdctx->buf[3] = (md5_u32) 0x10325476;
 }
 
-void md5_update(md5_ctx_t *mdctx, unsigned char const *data, unsigned int size)
+void md5_update(md5_ctx_t *mdctx, unsigned char const *data, size_t size)
 {
-	unsigned int i, j, mdi;
+	size_t i, j, mdi;
 	md5_u32 in[16];
 
 	/* compute number of bytes mod 64 */
@@ -198,7 +198,7 @@ void md5_update(md5_ctx_t *mdctx, unsigned char const *data, unsigned int size)
 
 void md5_final(md5_ctx_t *mdctx)
 {
-	unsigned int i, j, mdi;
+	size_t i, j, mdi;
 	md5_u32 in[16];
 	static unsigned char const buf_pad[64] = {
 		0x80, 0, 0, 0, 0, 0, 0, 0,
@@ -243,7 +243,7 @@ void md5_final(md5_ctx_t *mdctx)
 
 void md5_hex(unsigned char *src, char *dst)
 {
-	unsigned i, c;
+	size_t i, c;
 	static char const hex[] = "0123456789abcdef";
 
 	for (i = 0; i < 16; i++) {
@@ -254,7 +254,7 @@ void md5_hex(unsigned char *src, char *dst)
 	dst[32] = '\0';
 }
 
-void do_md5_file(FILE *file, long start, long bytes, char *hash)
+void do_md5_file(FILE *file, size_t start, size_t bytes, char *hash)
 {
 	int n;
 	md5_ctx_t ctx;
@@ -273,7 +273,7 @@ void do_md5_file(FILE *file, long start, long bytes, char *hash)
 	md5_hex(ctx.digest, hash);
 }
 
-void do_md5_string(char const *pass, int passlen, char *hash)
+void do_md5_string(char const *pass, size_t passlen, char *hash)
 {
 	md5_ctx_t ctx;
 
@@ -282,4 +282,3 @@ void do_md5_string(char const *pass, int passlen, char *hash)
 	md5_final(&ctx);
 	md5_hex(ctx.digest, hash);
 }
-

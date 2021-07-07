@@ -51,7 +51,7 @@ void GwLkCloseDB(GWLKF_HANDLE hLinksDB);
 POP3Link *GwLkGetFirstUser(GWLKF_HANDLE hLinksDB);
 POP3Link *GwLkGetNextUser(GWLKF_HANDLE hLinksDB);
 int GwLkGetMsgSyncDbFile(char const *pszRmtDomain, char const *pszRmtName,
-			 char *pszMsgSyncFile, int iMaxPath);
+			 char *pszMsgSyncFile, size_t sMaxPath);
 int GwLkLinkLock(POP3Link const *pPopLnk);
 void GwLkLinkUnlock(POP3Link const *pPopLnk);
 int GwLkClearLinkLocksDir(void);
@@ -63,4 +63,3 @@ int GwLkEnable(char const *pszDomain, char const *pszName,
 	       char const *pszRmtDomain, char const *pszRmtName, bool bEnable);
 
 #endif
-
