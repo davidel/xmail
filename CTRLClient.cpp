@@ -128,7 +128,7 @@ int CClnRecvTextFile(const char *pszFileName, BSOCK_HANDLE hBSock, int iTimeout)
 	return 0;
 }
 
-int CClnSendTextFile(const char *pszFileName, BSOCK_HANDLE hBSock, int iTimeout)
+ssize_t CClnSendTextFile(const char *pszFileName, BSOCK_HANDLE hBSock, int iTimeout)
 {
 	bool bCloseFile = false;
 	FILE *pFile = stdin;
@@ -143,7 +143,7 @@ int CClnSendTextFile(const char *pszFileName, BSOCK_HANDLE hBSock, int iTimeout)
 	}
 	while (MscFGets(szBuffer, sizeof(szBuffer) - 1, pFile) != NULL) {
 		if (szBuffer[0] == '.')
-			for (int i = strlen(szBuffer); i >= 0; i--)
+			for (ssize_t i = strlen(szBuffer); i >= 0; i--)
 				szBuffer[i + 1] = szBuffer[i];
 
 		if (BSckSendString(hBSock, szBuffer, iTimeout) <= 0) {
@@ -483,12 +483,13 @@ int CClnExec(int iArgCount, char *pszArgs[])
 		return CCLN_ERR_SSL_KEYCERT;
 	}
 
-	int iFirstParam = i, iCmdLength = 0;
+	int iFirstParam = i;
+	size_t sCmdLength = 0;
 
 	for (; i < iArgCount; i++)
-		iCmdLength += strlen(pszArgs[i]) + 4;
+		sCmdLength += strlen(pszArgs[i]) + 4;
 
-	char *pszCommand = (char *) SysAlloc(iCmdLength + 1);
+	char *pszCommand = (char *) SysAlloc(sCmdLength + 1);
 
 	if (pszCommand == NULL)
 		return ErrGetErrorCode();
@@ -563,4 +564,3 @@ int main(int iArgCount, char *pszArgs[])
 }
 
 #endif				// #ifndef __CTRLCLNT_LIBRARY__
-
