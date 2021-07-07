@@ -231,7 +231,7 @@ static int FilGetFilePath(char const *pszMode, char *pszFilePath, size_t sMaxPat
 
 static int FilAddFilter(char **ppszFilters, size_t &sNumFilters, char const *pszFilterName)
 {
-	for (int ii = 0; ii < sNumFilters; ii++)
+	for (size_t ii = 0; ii < sNumFilters; ii++)
 		if (strcmp(ppszFilters[ii], pszFilterName) == 0)
 			return 0;
 

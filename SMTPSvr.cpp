@@ -341,7 +341,7 @@ static int SMTPLogSession(SMTPSession &SMTPS, char const *pszSender,
 }
 
 static int SMTPCheckMapsList(SYS_INET_ADDR const &PeerInfo, char const *pszMapList,
-			     char *pszMapName, int iMaxMapName, int &iMapCode)
+			     char *pszMapName, size_t sMaxMapName, int &iMapCode)
 {
 	for (;;) {
 		char const *pszColon = strchr(pszMapList, ':');
@@ -361,7 +361,7 @@ static int SMTPCheckMapsList(SYS_INET_ADDR const &PeerInfo, char const *pszMapLi
 			char szMapSpec[MAX_HOST_NAME + 128] = "";
 
 			if (pszMapName != NULL)
-				StrNCpy(pszMapName, szMapName, iMaxMapName);
+				StrNCpy(pszMapName, szMapName, sMaxMapName);
 			iMapCode = iRetCode;
 
 			SysInetNToA(PeerInfo, szIP, sizeof(szIP));
@@ -379,12 +379,12 @@ static int SMTPCheckMapsList(SYS_INET_ADDR const &PeerInfo, char const *pszMapLi
 	return 0;
 }
 
-static int SMTPGetFilterFile(char const *pszFiltID, char *pszFileName, int iMaxName)
+static int SMTPGetFilterFile(char const *pszFiltID, char *pszFileName, size_t sMaxName)
 {
 	char szMailRoot[SYS_MAX_PATH] = "";
 
 	CfgGetRootPath(szMailRoot, sizeof(szMailRoot));
-	SysSNPrintf(pszFileName, iMaxName - 1, "%sfilters.%s.tab", szMailRoot, pszFiltID);
+	SysSNPrintf(pszFileName, sMaxName - 1, "%sfilters.%s.tab", szMailRoot, pszFiltID);
 
 	return SysExistFile(pszFileName);
 }
@@ -959,12 +959,12 @@ static void SMTPFullResetSession(SMTPSession &SMTPS)
 }
 
 static int SMTPGetUserSmtpPerms(UserInfo *pUI, SVRCFG_HANDLE hSvrConfig, char *pszPerms,
-				int iMaxPerms)
+				size_t sMaxPerms)
 {
 	char *pszUserPerms = UsrGetUserInfoVar(pUI, "SmtpPerms");
 
 	if (pszUserPerms != NULL) {
-		StrNCpy(pszPerms, pszUserPerms, iMaxPerms);
+		StrNCpy(pszPerms, pszUserPerms, sMaxPerms);
 		SysFree(pszUserPerms);
 	} else {
 		/* Match found, get the default permissions */
@@ -972,7 +972,7 @@ static int SMTPGetUserSmtpPerms(UserInfo *pUI, SVRCFG_HANDLE hSvrConfig, char *p
 						       "DefaultSmtpPerms", "MRVZ");
 
 		if (pszDefultPerms != NULL) {
-			StrNCpy(pszPerms, pszDefultPerms, iMaxPerms);
+			StrNCpy(pszPerms, pszDefultPerms, sMaxPerms);
 			SysFree(pszDefultPerms);
 		} else
 			SetEmptyString(pszPerms);
@@ -2117,20 +2117,20 @@ static int SMTPAddAuth(char **ppszAuths, int iNumAuths, int *piAuthCnt, char con
 	return *piAuthCnt;
 }
 
-static char *SMTPGetAuthFilePath(char *pszFilePath, int iMaxPath)
+static char *SMTPGetAuthFilePath(char *pszFilePath, size_t sMaxPath)
 {
-	CfgGetRootPath(pszFilePath, iMaxPath);
+	CfgGetRootPath(pszFilePath, sMaxPath);
 
-	StrNCat(pszFilePath, SVR_SMTP_AUTH_FILE, iMaxPath);
+	StrNCat(pszFilePath, SVR_SMTP_AUTH_FILE, sMaxPath);
 
 	return pszFilePath;
 }
 
-static char *SMTPGetExtAuthFilePath(char *pszFilePath, int iMaxPath)
+static char *SMTPGetExtAuthFilePath(char *pszFilePath, size_t sMaxPath)
 {
-	CfgGetRootPath(pszFilePath, iMaxPath);
+	CfgGetRootPath(pszFilePath, sMaxPath);
 
-	StrNCat(pszFilePath, SVR_SMTP_EXTAUTH_FILE, iMaxPath);
+	StrNCat(pszFilePath, SVR_SMTP_EXTAUTH_FILE, sMaxPath);
 
 	return pszFilePath;
 }
