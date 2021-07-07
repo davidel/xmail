@@ -122,12 +122,12 @@ void BSslCleanup(void)
 	SysFreeNullify(pSslMtxs);
 }
 
-static int BSslHandleAsync(SslBindCtx *pCtx, ssize_t sCode, int iDefError, int iTimeo)
+static int BSslHandleAsync(SslBindCtx *pCtx, int iCode, int iDefError, int iTimeo)
 {
 	int iError, iResult = 0;
 	SYS_fd_set FdSet;
 
-	if ((iError = SSL_get_error(pCtx->pSSL, sCode)) != SSL_ERROR_NONE) {
+	if ((iError = SSL_get_error(pCtx->pSSL, iCode)) != SSL_ERROR_NONE) {
 		SYS_FD_ZERO(&FdSet);
 		SYS_FD_SET(pCtx->SockFD, &FdSet);
 		if (iError == SSL_ERROR_WANT_READ) {

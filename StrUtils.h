@@ -25,11 +25,11 @@
 
 struct DynString {
 	char *pszBuffer;
-	int iStringSize;
-	int iBufferSize;
+	size_t sStringSize;
+	size_t sBufferSize;
 };
 
-void *StrMemDup(void const *pData, long lSize, long lExtra);
+void *StrMemDup(void const *pData, ssize_t sSize, ssize_t sExtra);
 int StrCmdLineToken(char const *&pszCmdLine, char *pszToken);
 char **StrGetArgs(char const *pszCmdLine, int &iArgsCount);
 char *StrLower(char *pszString);
@@ -66,7 +66,7 @@ int StrDynTruncate(DynString *pDS);
 char const *StrDynGet(DynString *pDS);
 char *StrDynDrop(DynString *pDS, int *piSize);
 int StrDynSize(DynString *pDS);
-int StrDynAdd(DynString *pDS, char const *pszBuffer, int iStringSize = -1);
+int StrDynAdd(DynString *pDS, char const *pszBuffer, ssize_t sStringSize = -1);
 int StrDynPrint(DynString *pDS, char const *pszFormat, ...);
 char *StrNDup(char const *pszStr, int iSize);
 int StrParamGet(char const *pszBuffer, char const *pszName, char *pszVal, int iMaxVal);
