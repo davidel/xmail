@@ -653,38 +653,38 @@ static int SMAILRemoteMsgSMTPSend(SVRCFG_HANDLE hSvrConfig, SHB_HANDLE hShbSMAIL
 	return 0;
 }
 
-static char *SMAILMacroLkupProc(void *pPrivate, char const *pszName, int iSize)
+static char *SMAILMacroLkupProc(void *pPrivate, char const *pszName, size_t sSize)
 {
 	MacroSubstCtx *pMSC = (MacroSubstCtx *) pPrivate;
 
-	if (MemMatch(pszName, iSize, "FROM", 4)) {
+	if (MemMatch(pszName, sSize, "FROM", 4)) {
 		char const *const *ppszFrom = USmlGetMailFrom(pMSC->hFSpool);
 		int iFromDomains = StrStringsCount(ppszFrom);
 
 		return SysStrDup((iFromDomains > 0) ? ppszFrom[iFromDomains - 1] : "");
-	} else if (MemMatch(pszName, iSize, "RCPT", 4)) {
+	} else if (MemMatch(pszName, sSize, "RCPT", 4)) {
 		char const *const *ppszRcpt = USmlGetRcptTo(pMSC->hFSpool);
 		int iRcptDomains = StrStringsCount(ppszRcpt);
 
 		return SysStrDup((iRcptDomains > 0) ? ppszRcpt[iRcptDomains - 1] : "");
-	} else if (MemMatch(pszName, iSize, "FILE", 4)) {
+	} else if (MemMatch(pszName, sSize, "FILE", 4)) {
 
 		return SysStrDup(pMSC->FSect.szFilePath);
-	} else if (MemMatch(pszName, iSize, "MSGID", 5)) {
+	} else if (MemMatch(pszName, sSize, "MSGID", 5)) {
 
 		return SysStrDup(USmlGetSpoolFile(pMSC->hFSpool));
-	} else if (MemMatch(pszName, iSize, "MSGREF", 6)) {
+	} else if (MemMatch(pszName, sSize, "MSGREF", 6)) {
 
 		return SysStrDup(USmlGetSmtpMessageID(pMSC->hFSpool));
-	} else if (MemMatch(pszName, iSize, "LOCALADDR", 9)) {
+	} else if (MemMatch(pszName, sSize, "LOCALADDR", 9)) {
 		char const *const *ppszInfo = USmlGetInfo(pMSC->hFSpool);
 
 		return SysStrDup(ppszInfo[smiServerAddr]);
-	} else if (MemMatch(pszName, iSize, "REMOTEADDR", 10)) {
+	} else if (MemMatch(pszName, sSize, "REMOTEADDR", 10)) {
 		char const *const *ppszInfo = USmlGetInfo(pMSC->hFSpool);
 
 		return SysStrDup(ppszInfo[smiClientAddr]);
-	} else if (MemMatch(pszName, iSize, "TMPFILE", 7)) {
+	} else if (MemMatch(pszName, sSize, "TMPFILE", 7)) {
 		char szTmpFile[SYS_MAX_PATH];
 
 		MscSafeGetTmpFile(szTmpFile, sizeof(szTmpFile));
@@ -694,7 +694,7 @@ static char *SMAILMacroLkupProc(void *pPrivate, char const *pszName, int iSize)
 		}
 
 		return SysStrDup(szTmpFile);
-	} else if (MemMatch(pszName, iSize, "USERAUTH", 8)) {
+	} else if (MemMatch(pszName, sSize, "USERAUTH", 8)) {
 		char szAuthName[MAX_ADDR_NAME] = "-";
 
 		USmlMessageAuth(pMSC->hFSpool, szAuthName, sizeof(szAuthName) - 1);
@@ -1560,4 +1560,3 @@ unsigned int SMAILThreadProc(void *pThreadData)
 
 	return 0;
 }
-

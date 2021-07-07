@@ -389,38 +389,38 @@ static int SMTPGetFilterFile(char const *pszFiltID, char *pszFileName, int iMaxN
 	return SysExistFile(pszFileName);
 }
 
-static char *SMTPMacroLkupProc(void *pPrivate, char const *pszName, int iSize)
+static char *SMTPMacroLkupProc(void *pPrivate, char const *pszName, size_t sSize)
 {
 	SMTPSession *pSMTPS = (SMTPSession *) pPrivate;
 
-	if (MemMatch(pszName, iSize, "FROM", 4)) {
+	if (MemMatch(pszName, sSize, "FROM", 4)) {
 
 		return SysStrDup(pSMTPS->pszFrom != NULL ? pSMTPS->pszFrom: "-");
-	} else if (MemMatch(pszName, iSize, "CRCPT", 5)) {
+	} else if (MemMatch(pszName, sSize, "CRCPT", 5)) {
 
 		return SysStrDup(pSMTPS->pszRcpt != NULL ? pSMTPS->pszRcpt: "-");
-	} else if (MemMatch(pszName, iSize, "RRCPT", 5)) {
+	} else if (MemMatch(pszName, sSize, "RRCPT", 5)) {
 
 		return SysStrDup(pSMTPS->pszRealRcpt != NULL ?
 				 pSMTPS->pszRealRcpt: pSMTPS->pszRcpt != NULL ?
 				 pSMTPS->pszRcpt: "-");
-	} else if (MemMatch(pszName, iSize, "FILE", 4)) {
+	} else if (MemMatch(pszName, sSize, "FILE", 4)) {
 
 		return SysStrDup(pSMTPS->szMsgFile);
-	} else if (MemMatch(pszName, iSize, "LOCALADDR", 9)) {
+	} else if (MemMatch(pszName, sSize, "LOCALADDR", 9)) {
 		char szAddr[128] = "";
 
 		MscGetAddrString(pSMTPS->SockInfo, szAddr, sizeof(szAddr) - 1);
 		return SysStrDup(szAddr);
-	} else if (MemMatch(pszName, iSize, "REMOTEADDR", 10)) {
+	} else if (MemMatch(pszName, sSize, "REMOTEADDR", 10)) {
 		char szAddr[128] = "";
 
 		MscGetAddrString(pSMTPS->PeerInfo, szAddr, sizeof(szAddr) - 1);
 		return SysStrDup(szAddr);
-	} else if (MemMatch(pszName, iSize, "MSGREF", 6)) {
+	} else if (MemMatch(pszName, sSize, "MSGREF", 6)) {
 
 		return SysStrDup(pSMTPS->szMessageID);
-	} else if (MemMatch(pszName, iSize, "USERAUTH", 8)) {
+	} else if (MemMatch(pszName, sSize, "USERAUTH", 8)) {
 
 		return SysStrDup(IsEmptyString(pSMTPS->szLogonUser) ?
 				 "-": pSMTPS->szLogonUser);
@@ -2379,26 +2379,26 @@ static int SMTPHandleCmd_STARTTLS(char const *pszCommand, BSOCK_HANDLE hBSock, S
 	return 0;
 }
 
-static char *SMTPExtAuthMacroLkupProc(void *pPrivate, char const *pszName, int iSize)
+static char *SMTPExtAuthMacroLkupProc(void *pPrivate, char const *pszName, size_t sSize)
 {
 	ExtAuthMacroSubstCtx *pASX = (ExtAuthMacroSubstCtx *) pPrivate;
 
-	if (MemMatch(pszName, iSize, "USER", 4)) {
+	if (MemMatch(pszName, sSize, "USER", 4)) {
 
 		return SysStrDup(pASX->pszUsername != NULL ? pASX->pszUsername: "-");
-	} else if (MemMatch(pszName, iSize, "PASS", 4)) {
+	} else if (MemMatch(pszName, sSize, "PASS", 4)) {
 
 		return SysStrDup(pASX->pszPassword != NULL ? pASX->pszPassword: "-");
-	} else if (MemMatch(pszName, iSize, "CHALL", 5)) {
+	} else if (MemMatch(pszName, sSize, "CHALL", 5)) {
 
 		return SysStrDup(pASX->pszChallenge != NULL ? pASX->pszChallenge: "-");
-	} else if (MemMatch(pszName, iSize, "DGEST", 5)) {
+	} else if (MemMatch(pszName, sSize, "DGEST", 5)) {
 
 		return SysStrDup(pASX->pszDigest != NULL ? pASX->pszDigest: "-");
-	} else if (MemMatch(pszName, iSize, "RFILE", 5)) {
+	} else if (MemMatch(pszName, sSize, "RFILE", 5)) {
 
 		return SysStrDup(pASX->pszRespFile);
-	} else if (MemMatch(pszName, iSize, "AUTH", 4)) {
+	} else if (MemMatch(pszName, sSize, "AUTH", 4)) {
 
 		return SysStrDup(pASX->pszAuthType);
 	}

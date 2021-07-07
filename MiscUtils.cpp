@@ -1433,7 +1433,7 @@ int MscIsIPDomain(char const *pszDomain, char *pszIP, int iIPSize)
 }
 
 static char *MscMacroReplace(char const *pszIn, size_t *pSize,
-			     char *(*pLkupProc)(void *, char const *, int), void *pPriv)
+			     char *(*pLkupProc)(void *, char const *, size_t), void *pPriv)
 {
 	char *pszLkup;
 
@@ -1447,7 +1447,7 @@ static char *MscMacroReplace(char const *pszIn, size_t *pSize,
 	return pszLkup;
 }
 
-int MscReplaceTokens(char **ppszTokens, char *(*pLkupProc)(void *, char const *, int),
+int MscReplaceTokens(char **ppszTokens, char *(*pLkupProc)(void *, char const *, size_t),
 		     void *pPriv)
 {
 	int i;

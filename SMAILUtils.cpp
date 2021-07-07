@@ -1277,44 +1277,44 @@ static int USmlLocalDelivery(SVRCFG_HANDLE hSvrConfig, UserInfo *pUI, SPLF_HANDL
 	return 0;
 }
 
-static char *USmlMacroLkupProc(void *pPrivate, char const *pszName, int iSize)
+static char *USmlMacroLkupProc(void *pPrivate, char const *pszName, size_t sSize)
 {
 	MacroSubstCtx *pMSC = (MacroSubstCtx *) pPrivate;
 
-	if (MemMatch(pszName, iSize, "FROM", 4)) {
+	if (MemMatch(pszName, sSize, "FROM", 4)) {
 		char const *const *ppszFrom = USmlGetMailFrom(pMSC->hFSpool);
 		int iFromDomains = StrStringsCount(ppszFrom);
 
 		return SysStrDup((iFromDomains > 0) ? ppszFrom[iFromDomains - 1]: "");
-	} else if (MemMatch(pszName, iSize, "RCPT", 4)) {
+	} else if (MemMatch(pszName, sSize, "RCPT", 4)) {
 		char const *const *ppszRcpt = USmlGetRcptTo(pMSC->hFSpool);
 		int iRcptDomains = StrStringsCount(ppszRcpt);
 
 		return SysStrDup((iRcptDomains > 0) ? ppszRcpt[iRcptDomains - 1]: "");
-	} else if (MemMatch(pszName, iSize, "RRCPT", 5)) {
+	} else if (MemMatch(pszName, sSize, "RRCPT", 5)) {
 		char szUserAddress[MAX_ADDR_NAME] = "";
 
 		UsrGetAddress(pMSC->pUI, szUserAddress);
 
 		return SysStrDup(szUserAddress);
-	} else if (MemMatch(pszName, iSize, "FILE", 4)) {
+	} else if (MemMatch(pszName, sSize, "FILE", 4)) {
 
 		return SysStrDup(pMSC->FSect.szFilePath);
-	} else if (MemMatch(pszName, iSize, "MSGID", 5)) {
+	} else if (MemMatch(pszName, sSize, "MSGID", 5)) {
 
 		return SysStrDup(USmlGetSpoolFile(pMSC->hFSpool));
-	} else if (MemMatch(pszName, iSize, "MSGREF", 6)) {
+	} else if (MemMatch(pszName, sSize, "MSGREF", 6)) {
 
 		return SysStrDup(USmlGetSmtpMessageID(pMSC->hFSpool));
-	} else if (MemMatch(pszName, iSize, "LOCALADDR", 9)) {
+	} else if (MemMatch(pszName, sSize, "LOCALADDR", 9)) {
 		char const *const *ppszInfo = USmlGetInfo(pMSC->hFSpool);
 
 		return SysStrDup(ppszInfo[smiServerAddr]);
-	} else if (MemMatch(pszName, iSize, "REMOTEADDR", 10)) {
+	} else if (MemMatch(pszName, sSize, "REMOTEADDR", 10)) {
 		char const *const *ppszInfo = USmlGetInfo(pMSC->hFSpool);
 
 		return SysStrDup(ppszInfo[smiClientAddr]);
-	} else if (MemMatch(pszName, iSize, "TMPFILE", 7)) {
+	} else if (MemMatch(pszName, sSize, "TMPFILE", 7)) {
 		char szTmpFile[SYS_MAX_PATH] = "";
 
 		MscSafeGetTmpFile(szTmpFile, sizeof(szTmpFile));
@@ -1324,7 +1324,7 @@ static char *USmlMacroLkupProc(void *pPrivate, char const *pszName, int iSize)
 		}
 
 		return SysStrDup(szTmpFile);
-	} else if (MemMatch(pszName, iSize, "USERAUTH", 8)) {
+	} else if (MemMatch(pszName, sSize, "USERAUTH", 8)) {
 		char szAuthName[MAX_ADDR_NAME] = "-";
 
 		USmlMessageAuth(pMSC->hFSpool, szAuthName, sizeof(szAuthName) - 1);
@@ -2223,7 +2223,7 @@ char const *USmlDotAtom(char const *pszStr, char const *pszTop)
 
 static char const *USmlIPDomain(char const *pszAddress, char const *pszTop)
 {
-	int iSize;
+	size_t sSize;
 	char const *pszNext;
 	SYS_INET_ADDR Addr;
 	char szIP[256];
@@ -2231,11 +2231,11 @@ static char const *USmlIPDomain(char const *pszAddress, char const *pszTop)
 	if (*pszAddress != '[' ||
 	    (pszNext = (char const *) memchr(pszAddress, ']',
 					     (int) (pszTop - pszAddress))) == NULL ||
-	    (iSize = (int) (pszNext - pszAddress) - 1) >= (int) sizeof(szIP)) {
+	    (sSize = (size_t) (pszNext - pszAddress) - 1) >= (int) sizeof(szIP)) {
 		ErrSetErrorCode(ERR_BAD_TAG_ADDRESS, pszAddress);
 		return NULL;
 	}
-	Cpy2Sz(szIP, pszAddress + 1, iSize);
+	Cpy2Sz(szIP, pszAddress + 1, sSize);
 	if (SysGetHostByName(szIP, -1, Addr) < 0)
 		return NULL;
 
@@ -2714,7 +2714,7 @@ int USmlMailLoopCheck(SPLF_HANDLE hFSpool, SVRCFG_HANDLE hSvrConfig)
 	return 0;
 }
 
-int USmlMessageAuth(SPLF_HANDLE hFSpool, char *pszAuthName, int iSize)
+int USmlMessageAuth(SPLF_HANDLE hFSpool, char *pszAuthName, size_t sSize)
 {
 	SpoolFileData *pSFD = (SpoolFileData *) hFSpool;
 
@@ -2728,7 +2728,7 @@ int USmlMessageAuth(SPLF_HANDLE hFSpool, char *pszAuthName, int iSize)
 			break;
 		if (stricmp(pMTD->pszTagName, "X-AuthUser") == 0) {
 			if (pszAuthName != NULL) {
-				StrNCpy(pszAuthName, pMTD->pszTagData, iSize);
+				StrNCpy(pszAuthName, pMTD->pszTagData, sSize);
 				StrTrim(pszAuthName, " \t\r\n");
 			}
 			return 0;

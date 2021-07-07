@@ -372,44 +372,44 @@ static int FilPreExec(FilterMsgInfo const &FMI, FilterExecCtx *pFCtx,
 	return FilExecPreParse(pFCtx, ppszPEError);
 }
 
-static char *FilMacroLkupProc(void *pPrivate, char const *pszName, int iSize)
+static char *FilMacroLkupProc(void *pPrivate, char const *pszName, size_t sSize)
 {
 	FilterMacroSubstCtx *pFMS = (FilterMacroSubstCtx *) pPrivate;
 
-	if (MemMatch(pszName, iSize, "FROM", 4)) {
+	if (MemMatch(pszName, sSize, "FROM", 4)) {
 		char const *const *ppszFrom = USmlGetMailFrom(pFMS->hFSpool);
 		int iFromDomains = StrStringsCount(ppszFrom);
 
 		return SysStrDup((iFromDomains > 0) ? ppszFrom[iFromDomains - 1] : "");
-	} else if (MemMatch(pszName, iSize, "RCPT", 4)) {
+	} else if (MemMatch(pszName, sSize, "RCPT", 4)) {
 		char const *const *ppszRcpt = USmlGetRcptTo(pFMS->hFSpool);
 		int iRcptDomains = StrStringsCount(ppszRcpt);
 
 		return SysStrDup((iRcptDomains > 0) ? ppszRcpt[iRcptDomains - 1] : "");
-	} else if (MemMatch(pszName, iSize, "RFROM", 5)) {
+	} else if (MemMatch(pszName, sSize, "RFROM", 5)) {
 
 		return SysStrDup(pFMS->pFMI->szSender);
-	} else if (MemMatch(pszName, iSize, "RRCPT", 5)) {
+	} else if (MemMatch(pszName, sSize, "RRCPT", 5)) {
 
 		return SysStrDup(pFMS->pFMI->szRecipient);
-	} else if (MemMatch(pszName, iSize, "FILE", 4)) {
+	} else if (MemMatch(pszName, sSize, "FILE", 4)) {
 
 		return SysStrDup(pFMS->FSect.szFilePath);
-	} else if (MemMatch(pszName, iSize, "MSGID", 5)) {
+	} else if (MemMatch(pszName, sSize, "MSGID", 5)) {
 
 		return SysStrDup(USmlGetSpoolFile(pFMS->hFSpool));
-	} else if (MemMatch(pszName, iSize, "MSGREF", 6)) {
+	} else if (MemMatch(pszName, sSize, "MSGREF", 6)) {
 
 		return SysStrDup(USmlGetSmtpMessageID(pFMS->hFSpool));
-	} else if (MemMatch(pszName, iSize, "LOCALADDR", 9)) {
+	} else if (MemMatch(pszName, sSize, "LOCALADDR", 9)) {
 		char const *const *ppszInfo = USmlGetInfo(pFMS->hFSpool);
 
 		return SysStrDup(ppszInfo[smiServerAddr]);
-	} else if (MemMatch(pszName, iSize, "REMOTEADDR", 10)) {
+	} else if (MemMatch(pszName, sSize, "REMOTEADDR", 10)) {
 		char const *const *ppszInfo = USmlGetInfo(pFMS->hFSpool);
 
 		return SysStrDup(ppszInfo[smiClientAddr]);
-	} else if (MemMatch(pszName, iSize, "USERAUTH", 8)) {
+	} else if (MemMatch(pszName, sSize, "USERAUTH", 8)) {
 
 		return SysStrDup(IsEmptyString(pFMS->pFMI->szAuthName) ? "-":
 				 pFMS->pFMI->szAuthName);

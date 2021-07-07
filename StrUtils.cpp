@@ -676,7 +676,7 @@ char *StrDynDrop(DynString *pDS, size_t *pSize)
 	return pszBuffer;
 }
 
-int StrDynSize(DynString *pDS)
+size_t StrDynSize(DynString *pDS)
 {
 	return pDS->sStringSize;
 }
@@ -753,7 +753,7 @@ int StrParamGet(char const *pszBuffer, char const *pszName, char *pszVal, int iM
 }
 
 char *StrMacSubst(char const *pszIn, size_t *pSize,
-		  char *(*pLkupProc)(void *, char const *, int), void *pPriv)
+		  char *(*pLkupProc)(void *, char const *, size_t), void *pPriv)
 {
 	ssize_t i, j;
 	char *pszLkup = NULL;

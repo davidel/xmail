@@ -91,20 +91,20 @@ static int UAthGetConfigPath(char const *pszService, char const *pszDomain, char
 	return ERR_NO_EXTERNAL_AUTH_DEFINED;
 }
 
-static char *UAthAuthMacroLkupProc(void *pPrivate, char const *pszName, int iSize)
+static char *UAthAuthMacroLkupProc(void *pPrivate, char const *pszName, size_t sSize)
 {
 	UAuthMacroSubstCtx *pUATH = (UAuthMacroSubstCtx *) pPrivate;
 
-	if (MemMatch(pszName, iSize, "DOMAIN", 6)) {
+	if (MemMatch(pszName, sSize, "DOMAIN", 6)) {
 
 		return SysStrDup(pUATH->pszDomain != NULL ? pUATH->pszDomain: "");
-	} else if (MemMatch(pszName, iSize, "USER", 4)) {
+	} else if (MemMatch(pszName, sSize, "USER", 4)) {
 
 		return SysStrDup(pUATH->pszUsername != NULL ? pUATH->pszUsername: "");
-	} else if (MemMatch(pszName, iSize, "PASSWD", 6)) {
+	} else if (MemMatch(pszName, sSize, "PASSWD", 6)) {
 
 		return SysStrDup(pUATH->pszPassword != NULL ? pUATH->pszPassword: "");
-	} else if (MemMatch(pszName, iSize, "PATH", 4)) {
+	} else if (MemMatch(pszName, sSize, "PATH", 4)) {
 		char szUserPath[SYS_MAX_PATH] = "";
 
 		if (pUATH->pUI != NULL)
@@ -226,4 +226,3 @@ int UAthDropDomain(char const *pszService, char const *pszDomain)
 {
 	return UAthExecAuthOp(pszService, AUTH_DROPDOMAIN_CONFIG, pszDomain, NULL, NULL, NULL);
 }
-

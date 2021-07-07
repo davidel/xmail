@@ -137,7 +137,7 @@ void *MscWriteUint64(void *pData, SYS_UINT64 uValue);
 int MscCmdStringCheck(char const *pszString);
 int MscGetSectionSize(FileSection const *pFS, SYS_OFF_T *pllSize);
 int MscIsIPDomain(char const *pszDomain, char *pszIP, int iIPSize);
-int MscReplaceTokens(char **ppszTokens, char *(*pLkupProc)(void *, char const *, int),
+int MscReplaceTokens(char **ppszTokens, char *(*pLkupProc)(void *, char const *, size_t),
 		     void *pPriv);
 int MscGetAddrString(SYS_INET_ADDR const &AddrInfo, char *pszAStr, int iSize);
 unsigned int MscServiceThread(void *pThreadData);
