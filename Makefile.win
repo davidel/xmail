@@ -42,14 +42,14 @@ CPP_FLAGS=$(CPP_FLAGS) /D DEBUG_OSSL
 !IF "$(CFG)" == "release"
 
 OUTDIR=.\release
-CPP_FLAGS=$(CPP_DEFS) $(INCL_DIRS) /Zp1 /W3 /O2 /MT /D "WIN32" /D "NDEBUG" \
+CPP_FLAGS=$(CPP_DEFS) $(INCL_DIRS) /W3 /O2 /MT /D "WIN32" /D "NDEBUG" \
 	/D "_CONSOLE" /D "_MBCS" /Fo"$(OUTDIR)\\" /c
 LINK_DEBUG=
 
 !ELSEIF  "$(CFG)" == "debug"
 
 OUTDIR=.\debug
-CPP_FLAGS=$(CPP_DEFS) $(INCL_DIRS) /Zp1 /Zi /W3 /Od /MTd /D "WIN32" /D "_DEBUG" \
+CPP_FLAGS=$(CPP_DEFS) $(INCL_DIRS) /Zi /W3 /Od /MTd /D "WIN32" /D "_DEBUG" \
 	/D "_CONSOLE" /D "_MBCS" /Fo"$(OUTDIR)\\" /c
 LINK_DEBUG=/debug
 

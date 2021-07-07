@@ -66,6 +66,8 @@
 #define RCODE_NOTSUPPORTED      4
 #define RCODE_REFUSED           5
 
+#pragma pack(push, 1)
+
 struct DNS_HEADER {
 	SYS_UINT16 Id;
 #ifdef BIG_ENDIAN_BITFIELD
@@ -80,6 +82,8 @@ struct DNS_HEADER {
 	SYS_UINT16 NSCount;
 	SYS_UINT16 ARCount;
 };
+
+#pragma pack(pop)
 
 struct DNSRecord {
 	struct SysListHead Lnk;
@@ -131,4 +135,3 @@ int DNS_QueryDirect(char const *pszDNSServer, char const *pszName,
 		    unsigned int uQType, int iQuerySockType, DNSAnswer *pAns);
 
 #endif
-
