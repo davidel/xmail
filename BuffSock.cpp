@@ -48,7 +48,7 @@ struct BuffSocketData {
 
 static ssize_t BSckReadLL(BuffSocketData *pBSD, void *pData, size_t sSize, int iTimeout)
 {
-	ssize_t sCount = 0;
+	size_t sCount = 0;
 
 	while (sCount < sSize) {
 		ssize_t iCRead = BSOCK_READ(pBSD, (char *) pData + sCount,
@@ -63,7 +63,7 @@ static ssize_t BSckReadLL(BuffSocketData *pBSD, void *pData, size_t sSize, int i
 
 static ssize_t BSckWriteLL(BuffSocketData *pBSD, void const *pData, size_t sSize, int iTimeout)
 {
-	ssize_t sCount = 0;
+	size_t sCount = 0;
 
 	while (sCount < sSize) {
 		ssize_t sCWrite = BSOCK_WRITE(pBSD, (char const *) pData + sCount,
@@ -153,17 +153,17 @@ SYS_SOCKET BSckDetach(BSOCK_HANDLE hBSock, int iCloseSocket)
 
 static int BSckFetchData(BuffSocketData *pBSD, int iTimeout)
 {
-	int iRdBytes;
+	ssize_t sRdBytes;
 
 	pBSD->sReadIndex = 0;
-	if ((iRdBytes = BSOCK_READ(pBSD, pBSD->pszBuffer, pBSD->iBufferSize,
+	if ((sRdBytes = BSOCK_READ(pBSD, pBSD->pszBuffer, pBSD->iBufferSize,
 				   iTimeout)) <= 0) {
 		ErrSetErrorCode(ERR_SOCK_NOMORE_DATA);
-		return iRdBytes;
+		return sRdBytes;
 	}
-	pBSD->sBytesInBuffer = iRdBytes;
+	pBSD->sBytesInBuffer = sRdBytes;
 
-	return iRdBytes;
+	return sRdBytes;
 }
 
 int BSckGetChar(BSOCK_HANDLE hBSock, int iTimeout)
@@ -332,11 +332,11 @@ int BSckReadData(BSOCK_HANDLE hBSock, char *pszBuffer, size_t sSize, int iTimeou
 		sRdBytes = sBufRdBytes;
 	}
 	if (sRdBytes == 0 || (sSizeFill && sRdBytes < sSize)) {
-		int iRdSize = BSckReadLL(pBSD, pszBuffer + sRdBytes,
-					 sSize - sRdBytes, iTimeout);
+		ssize_t sRdSize = BSckReadLL(pBSD, pszBuffer + sRdBytes,
+					     sSize - sRdBytes, iTimeout);
 
-		if (iRdSize > 0)
-			sRdBytes += iRdSize;
+		if (sRdSize > 0)
+			sRdBytes += sRdSize;
 	}
 
 	return sRdBytes;
@@ -400,14 +400,13 @@ char *BSckBufferGet(BSOCK_HANDLE hBSock, BSockLineBuffer *pBLB, int iTimeout, si
 				  &iGotNL) == NULL)
 			return NULL;
 		if (!iGotNL) {
-			int iNewSize = 2 * pBLB->sSize + 1;
-			char *pszBuffer = (char *) SysRealloc(pBLB->pszBuffer,
-							      (unsigned int) iNewSize);
+			size_t sNewSize = 2 * pBLB->sSize + 1;
+			char *pszBuffer = (char *) SysRealloc(pBLB->pszBuffer, sNewSize);
 
 			if (pszBuffer == NULL)
 				return NULL;
 			pBLB->pszBuffer = pszBuffer;
-			pBLB->sSize = iNewSize;
+			pBLB->sSize = sNewSize;
 		}
 		sLnLength += sCurrLength;
 	} while (!iGotNL);

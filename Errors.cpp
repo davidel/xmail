@@ -425,9 +425,9 @@ char *ErrGetErrorStringInfo(int iError)
 	if (iErrIndex < 0 || iErrIndex >= ERROR_COUNT)
 		return SysStrDup("Unknown error code");
 
-	int iInfoLength = (pEV->pszInfo[iErrIndex] != NULL) ? strlen(pEV->pszInfo[iErrIndex]): 0;
+	size_t sInfoLength = (pEV->pszInfo[iErrIndex] != NULL) ? strlen(pEV->pszInfo[iErrIndex]): 0;
 	char const *pszError = pszErrors[iErrIndex] != NULL ? pszErrors[iErrIndex]: "Unknown error code";
-	char *pszErrorInfo = (char *) SysAlloc(strlen(pszError) + iInfoLength + 256);
+	char *pszErrorInfo = (char *) SysAlloc(strlen(pszError) + sInfoLength + 256);
 
 	if (pszErrorInfo == NULL)
 		return NULL;
@@ -490,4 +490,3 @@ int ErrFileLogString(char const *pszFileName, char const *pszMessage)
 
 	return 0;
 }
-

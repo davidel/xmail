@@ -243,30 +243,30 @@ static int DNS_GetResourceRecord(SYS_UINT8 const *pBaseData, SYS_UINT8 const *pR
 	return 0;
 }
 
-static int DNS_NameCopy(SYS_UINT8 *pDNSQName, char const *pszInetName)
+static ssize_t DNS_NameCopy(SYS_UINT8 *pDNSQName, char const *pszInetName)
 {
-	int iNameLen = 0, iTokLen;
+	ssize_t sNameLen = 0, sTokLen;
 	char *pszToken, *pszSavePtr, *pszNameCopy;
 
 	if ((pszNameCopy = SysStrDup(pszInetName)) == NULL)
 		return ErrGetErrorCode();
 	pszToken = SysStrTok(pszNameCopy, ".", &pszSavePtr);
 	while (pszToken != NULL) {
-		iTokLen = strlen(pszToken);
+		sTokLen = strlen(pszToken);
 
-		*pDNSQName = (SYS_UINT8) iTokLen;
+		*pDNSQName = (SYS_UINT8) sTokLen;
 
 		strcpy((char *) pDNSQName + 1, pszToken);
 
-		pDNSQName += iTokLen + 1;
-		iNameLen += iTokLen + 1;
+		pDNSQName += sTokLen + 1;
+		sNameLen += sTokLen + 1;
 
 		pszToken = SysStrTok(NULL, ".", &pszSavePtr);
 	}
 	*pDNSQName = 0;
 	SysFree(pszNameCopy);
 
-	return iNameLen + 1;
+	return sNameLen + 1;
 }
 
 static SYS_UINT16 DNS_GetUniqueQueryId(void)
@@ -280,7 +280,7 @@ static int DNS_RequestSetup(DNSQuery **ppDNSQ, unsigned int uOpCode,
 			    unsigned int uQType, char const *pszInetName,
 			    int *piQLength, int iAskQR)
 {
-	int iNameLen;
+	ssize_t sNameLen;
 	DNSQuery *pDNSQ;
 	SYS_UINT8 *pQueryData;
 
@@ -300,9 +300,9 @@ static int DNS_RequestSetup(DNSQuery **ppDNSQ, unsigned int uOpCode,
 	pQueryData = pDNSQ->QueryData;
 
 	/* Copy name to query */
-	if ((iNameLen = DNS_NameCopy(pQueryData, pszInetName)) < 0)
+	if ((sNameLen = DNS_NameCopy(pQueryData, pszInetName)) < 0)
 		return ErrGetErrorCode();
-	pQueryData += iNameLen;
+	pQueryData += sNameLen;
 
 	/* Set query type */
 	MscWriteUint16(pQueryData, (SYS_UINT16) htons(uQType));
@@ -847,4 +847,3 @@ int DNS_QueryDirect(char const *pszDNSServer, char const *pszName,
 
 	return iError;
 }
-
