@@ -112,7 +112,7 @@ struct SMTPSession {
 	SYS_INET_ADDR PeerInfo;
 	SYS_INET_ADDR SockInfo;
 	int iCmdDelay;
-	unsigned long ulMaxMsgSize;
+	size_t sMaxMsgSize;
 	char szSvrFQDN[MAX_ADDR_NAME];
 	char szSvrDomain[MAX_ADDR_NAME];
 	char szClientFQDN[MAX_ADDR_NAME];
@@ -762,7 +762,7 @@ static int SMTPApplyPerms(SMTPSession &SMTPS, char const *pszPerms)
 			break;
 
 		case 'Z':
-			SMTPS.ulMaxMsgSize = 0;
+			SMTPS.sMaxMsgSize = 0;
 			break;
 
 		case 'S':
@@ -796,7 +796,7 @@ static int SMTPInitSession(ThreadConfig const *pThCfg, BSOCK_HANDLE hBSock,
 	SMTPS.iErrorsCount = 0;
 	SMTPS.iErrorsMax = 0;
 	SMTPS.iCmdDelay = 0;
-	SMTPS.ulMaxMsgSize = 0;
+	SMTPS.sMaxMsgSize = 0;
 	SetEmptyString(SMTPS.szMessageID);
 	SetEmptyString(SMTPS.szDestDomain);
 	SetEmptyString(SMTPS.szClientFQDN);
@@ -874,8 +874,8 @@ static int SMTPInitSession(ThreadConfig const *pThCfg, BSOCK_HANDLE hBSock,
 		return ErrorPop();
 	}
 	/* Get maximum accepted message size */
-	SMTPS.ulMaxMsgSize = 1024 * (unsigned long) SvrGetConfigInt("MaxMessageSize",
-								    0, SMTPS.hSvrConfig);
+	SMTPS.sMaxMsgSize = 1024 * (size_t) SvrGetConfigInt("MaxMessageSize",
+							    0, SMTPS.hSvrConfig);
 
 	/* Check if the emission of "X-Auth-User:" is diabled */
 	if (SvrGetConfigInt("DisableEmitAuthUser", 0, SMTPS.hSvrConfig))
@@ -994,7 +994,7 @@ static int SMTPApplyUserConfig(SMTPSession &SMTPS, UserInfo *pUI)
 
 	/* Check "MaxMessageSize" override */
 	if ((pszValue = UsrGetUserInfoVar(pUI, "MaxMessageSize")) != NULL) {
-		SMTPS.ulMaxMsgSize = 1024 * (unsigned long) atol(pszValue);
+		SMTPS.sMaxMsgSize = 1024 * (size_t) atol(pszValue);
 
 		SysFree(pszValue);
 	}
@@ -1096,14 +1096,14 @@ static int SMTPCheckMailParams(char const *pszCommand, char **ppszRetDomains,
 		pszParams = pszCommand;
 
 	/* Check the SIZE parameter */
-	if (SMTPS.ulMaxMsgSize != 0) {
+	if (SMTPS.sMaxMsgSize != 0) {
 		char const *pszSize = pszParams;
 
 		while ((pszSize = StrIStr(pszSize, " SIZE=")) != NULL) {
 			pszSize += CStringSize(" SIZE=");
 
 			if (isdigit(*pszSize) &&
-			    SMTPS.ulMaxMsgSize < (unsigned long) atol(pszSize)) {
+			    SMTPS.sMaxMsgSize < (size_t) atol(pszSize)) {
 				if (SMTPLogEnabled(SMTPS.pThCfg->hThShb, SMTPS.pSMTPCfg))
 					SMTPLogSession(SMTPS,
 						       (ppszRetDomains[0] !=
@@ -1953,15 +1953,16 @@ static int SMTPHandleCmd_DATA(char const *pszCommand, BSOCK_HANDLE hBSock, SMTPS
 		       SMTPS.pSMTPCfg->iTimeout);
 
 	/* Write data */
-	int iError = 0, iLineLength, iGotNL, iGotNLPrev = 1;
-	unsigned long ulMessageSize = 0;
-	unsigned long ulMaxMsgSize = SMTPS.ulMaxMsgSize;
+	size_t sLineLength;
+	int iError = 0, iGotNL, iGotNLPrev = 1;
+	size_t sMessageSize = 0;
+	size_t sMaxMsgSize = SMTPS.sMaxMsgSize;
 	char const *pszSmtpError = NULL;
 	char szBuffer[SMTP_MAX_LINE_SIZE + 4];
 
 	for (;;) {
 		if (BSckGetString(hBSock, szBuffer, sizeof(szBuffer) - 3,
-				  SMTPS.pSMTPCfg->iTimeout, &iLineLength, &iGotNL) == NULL) {
+				  SMTPS.pSMTPCfg->iTimeout, &sLineLength, &iGotNL) == NULL) {
 			/*
 			 * At this point, either we got a timeout or the remote
 			 * peer dropped the connection. We can safely set the
@@ -1979,19 +1980,19 @@ static int SMTPHandleCmd_DATA(char const *pszCommand, BSOCK_HANDLE hBSock, SMTPS
 
 		/* Correctly terminate the line */
 		if (iGotNL)
-			memcpy(szBuffer + iLineLength, "\r\n", 3), iLineLength += 2;
+			memcpy(szBuffer + sLineLength, "\r\n", 3), sLineLength += 2;
 
 		if (iError == 0) {
 			/* Write data on disk */
-			if (!fwrite(szBuffer, iLineLength, 1, SMTPS.pMsgFile)) {
+			if (!fwrite(szBuffer, sLineLength, 1, SMTPS.pMsgFile)) {
 				ErrSetErrorCode(iError = ERR_FILE_WRITE, SMTPS.szMsgFile);
 
 			}
 		}
-		ulMessageSize += (unsigned long) iLineLength;
+		sMessageSize += sLineLength;
 
 		/* Check the message size */
-		if ((ulMaxMsgSize != 0) && (ulMaxMsgSize < ulMessageSize)) {
+		if ((sMaxMsgSize != 0) && (sMaxMsgSize < sMessageSize)) {
 			pszSmtpError = "552 Message exceeds fixed maximum message size";
 
 			ErrSetErrorCode(iError = ERR_MESSAGE_SIZE);
@@ -2037,7 +2038,7 @@ static int SMTPHandleCmd_DATA(char const *pszCommand, BSOCK_HANDLE hBSock, SMTPS
 			/* Log the message receive */
 			if (SMTPLogEnabled(SMTPS.pThCfg->hThShb, SMTPS.pSMTPCfg))
 				SMTPLogSession(SMTPS, SMTPS.pszFrom, SMTPS.pszRcpt, "RECV=OK",
-					       ulMessageSize);
+					       sMessageSize);
 
 			/* Send the ack only when everything is OK */
 			BSckVSendString(hBSock, SMTPS.pSMTPCfg->iTimeout, "250 OK <%s>",
@@ -2280,8 +2281,8 @@ static int SMTPHandleCmd_EHLO(char const *pszCommand, BSOCK_HANDLE hBSock, SMTPS
 	SMTPListAuths(&DynS, SMTPS, iLinkSSL);
 
 	/* Emit maximum message size ( if set ) */
-	if (SMTPS.ulMaxMsgSize != 0)
-		StrDynPrint(&DynS, "250 SIZE %lu\r\n", SMTPS.ulMaxMsgSize);
+	if (SMTPS.sMaxMsgSize != 0)
+		StrDynPrint(&DynS, "250 SIZE %zu\r\n", SMTPS.sMaxMsgSize);
 	else
 		StrDynAdd(&DynS, "250 SIZE\r\n");
 	if (!iLinkSSL && SvrTestConfigFlag("EnableSMTP-TLS", true, SMTPS.hSvrConfig))

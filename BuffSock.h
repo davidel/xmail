@@ -33,38 +33,38 @@ typedef struct BSOCK_HANDLE_struct {
 
 struct BSockLineBuffer {
 	char *pszBuffer;
-	int iSize;
+	size_t sSize;
 };
 
 struct BufSockIOOps {
 	void *pPrivate;
 	char const *(*pName)(void *);
 	int (*pFree)(void *);
-	int (*pRead)(void *, void *, int, int);
-	int (*pWrite)(void *, void const *, int, int);
+	ssize_t (*pRead)(void *, void *, size_t, int);
+	ssize_t (*pWrite)(void *, void const *, size_t, int);
 	int (*pSendFile)(void *, char const *, SYS_OFF_T, SYS_OFF_T, int);
 };
 
 BSOCK_HANDLE BSckAttach(SYS_SOCKET SockFD, int iBufferSize = STD_SOCK_BUFFER_SIZE);
 SYS_SOCKET BSckDetach(BSOCK_HANDLE hBSock, int iCloseSocket = 0);
 int BSckGetChar(BSOCK_HANDLE hBSock, int iTimeout);
-char *BSckChGetString(BSOCK_HANDLE hBSock, char *pszBuffer, int iMaxChars, int iTimeout,
-		      int *pLineLength = NULL, int *piGotNL = NULL);
-char *BSckGetString(BSOCK_HANDLE hBSock, char *pszBuffer, int iMaxChars, int iTimeout,
-		    int *pLineLength = NULL, int *piGotNL = NULL);
-int BSckSendString(BSOCK_HANDLE hBSock, char const *pszBuffer, int iTimeout);
+char *BSckChGetString(BSOCK_HANDLE hBSock, char *pszBuffer, size_t sMaxChars, int iTimeout,
+		      size_t *pLineLength = NULL, int *piGotNL = NULL);
+char *BSckGetString(BSOCK_HANDLE hBSock, char *pszBuffer, size_t sMaxChars, int iTimeout,
+		    size_t *pLineLength = NULL, int *piGotNL = NULL);
+ssize_t BSckSendString(BSOCK_HANDLE hBSock, char const *pszBuffer, int iTimeout);
 int BSckVSendString(BSOCK_HANDLE hBSock, int iTimeout, char const *pszFormat, ...);
-int BSckSendData(BSOCK_HANDLE hBSock, char const *pszBuffer, int iSize, int iTimeout);
-int BSckReadData(BSOCK_HANDLE hBSock, char *pszBuffer, int iSize, int iTimeout,
-		 int iSizeFill = 0);
+ssize_t BSckSendData(BSOCK_HANDLE hBSock, char const *pszBuffer, size_t sSize, int iTimeout);
+int BSckReadData(BSOCK_HANDLE hBSock, char *pszBuffer, size_t sSize, int iTimeout,
+		 size_t sSizeFill = 0);
 int BSckSendFile(BSOCK_HANDLE hBSock, char const *pszFilePath, SYS_OFF_T llBaseOffset,
 		 SYS_OFF_T llEndOffset, int iTimeout);
 SYS_SOCKET BSckGetAttachedSocket(BSOCK_HANDLE hBSock);
 int BSckSetIOops(BSOCK_HANDLE hBSock, BufSockIOOps const *pIOops);
 char const *BSckBioName(BSOCK_HANDLE hBSock);
-int BSckBufferInit(BSockLineBuffer *pBLB, int iSize = -1);
+int BSckBufferInit(BSockLineBuffer *pBLB, ssize_t sSize = -1);
 void BSckBufferFree(BSockLineBuffer *pBLB);
 char *BSckBufferGet(BSOCK_HANDLE hBSock, BSockLineBuffer *pBLB, int iTimeout,
-		    int *piLnLength = NULL);
+		    size_t *pLnLength = NULL);
 
 #endif

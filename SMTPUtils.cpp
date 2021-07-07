@@ -109,10 +109,11 @@ struct SmtpChannel {
 };
 
 
-static int USmtpGetResponse(BSOCK_HANDLE hBSock, char *pszResponse, int iMaxResponse,
+static int USmtpGetResponse(BSOCK_HANDLE hBSock, char *pszResponse, size_t sMaxResponse,
 			    int iTimeout = STD_SMTP_TIMEOUT);
 static int USmtpSendCommand(BSOCK_HANDLE hBSock, char const *pszCommand,
-			    char *pszResponse, int iMaxResponse, int iTimeout = STD_SMTP_TIMEOUT);
+			    char *pszResponse, size_t sMaxResponse,
+			    int iTimeout = STD_SMTP_TIMEOUT);
 
 static char *USmtpGetGwTableFilePath(char *pszGwFilePath, int iMaxPath)
 {
@@ -799,31 +800,31 @@ static int USmtpIsPartialResponse(char const *pszResponse)
 	return (strlen(pszResponse) >= 4 && pszResponse[3] == '-') ? 1: 0;
 }
 
-static int USmtpGetResponse(BSOCK_HANDLE hBSock, char *pszResponse, int iMaxResponse,
+static int USmtpGetResponse(BSOCK_HANDLE hBSock, char *pszResponse, size_t sMaxResponse,
 			    int iTimeout)
 {
 	int iResultCode = -1;
-	int iResponseLenght = 0;
+	size_t sResponseLenght = 0;
 	char szPartial[1024] = "";
 
 	SetEmptyString(pszResponse);
 	do {
-		int iLineLength = 0;
+		size_t sLineLength = 0;
 
 		if (BSckGetString(hBSock, szPartial, sizeof(szPartial) - 1, iTimeout,
-				  &iLineLength) == NULL)
+				  &sLineLength) == NULL)
 			return ErrGetErrorCode();
 
-		if ((iResponseLenght + 2) < iMaxResponse) {
-			if (iResponseLenght > 0)
-				strcat(pszResponse, "\r\n"), iResponseLenght += 2;
+		if ((sResponseLenght + 2) < sMaxResponse) {
+			if (sResponseLenght > 0)
+				strcat(pszResponse, "\r\n"), sResponseLenght += 2;
 
-			int iCopyLenght = Min(iMaxResponse - 1 - iResponseLenght, iLineLength);
+			size_t sCopyLenght = Min(sMaxResponse - 1 - sResponseLenght, sLineLength);
 
-			if (iCopyLenght > 0) {
-				strncpy(pszResponse + iResponseLenght, szPartial, iCopyLenght);
-				iResponseLenght += iCopyLenght;
-				pszResponse[iResponseLenght] = '\0';
+			if (sCopyLenght > 0) {
+				strncpy(pszResponse + sResponseLenght, szPartial, sCopyLenght);
+				sResponseLenght += sCopyLenght;
+				pszResponse[sResponseLenght] = '\0';
 			}
 		}
 		if ((iResultCode = USmtpGetResultCode(szPartial)) < 0)
@@ -834,12 +835,12 @@ static int USmtpGetResponse(BSOCK_HANDLE hBSock, char *pszResponse, int iMaxResp
 }
 
 static int USmtpSendCommand(BSOCK_HANDLE hBSock, char const *pszCommand,
-			    char *pszResponse, int iMaxResponse, int iTimeout)
+			    char *pszResponse, size_t sMaxResponse, int iTimeout)
 {
 	if (BSckSendString(hBSock, pszCommand, iTimeout) <= 0)
 		return ErrGetErrorCode();
 
-	return USmtpGetResponse(hBSock, pszResponse, iMaxResponse, iTimeout);
+	return USmtpGetResponse(hBSock, pszResponse, sMaxResponse, iTimeout);
 }
 
 static int USmtpGetServerAuthFile(char const *pszServer, char *pszAuthFilePath)
@@ -2065,4 +2066,3 @@ char *USmtpGetReceived(int iType, char const *pszAuth, char const *const *ppszMs
 
 	return pszReceived;
 }
-

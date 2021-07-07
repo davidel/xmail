@@ -122,12 +122,12 @@ void BSslCleanup(void)
 	SysFreeNullify(pSslMtxs);
 }
 
-static int BSslHandleAsync(SslBindCtx *pCtx, int iCode, int iDefError, int iTimeo)
+static int BSslHandleAsync(SslBindCtx *pCtx, ssize_t sCode, int iDefError, int iTimeo)
 {
 	int iError, iResult = 0;
 	SYS_fd_set FdSet;
 
-	if ((iError = SSL_get_error(pCtx->pSSL, iCode)) != SSL_ERROR_NONE) {
+	if ((iError = SSL_get_error(pCtx->pSSL, sCode)) != SSL_ERROR_NONE) {
 		SYS_FD_ZERO(&FdSet);
 		SYS_FD_SET(pCtx->SockFD, &FdSet);
 		if (iError == SSL_ERROR_WANT_READ) {
@@ -149,34 +149,38 @@ static int BSslHandleAsync(SslBindCtx *pCtx, int iCode, int iDefError, int iTime
 	return iResult;
 }
 
-static int BSslReadLL(SslBindCtx *pCtx, void *pData, int iSize, int iTimeo)
+static ssize_t BSslReadLL(SslBindCtx *pCtx, void *pData, size_t sSize, int iTimeo)
 {
-	int iRead, iError;
+	ssize_t sRead;
 
 	for (;;) {
-		iRead = SSL_read(pCtx->pSSL, pData, iSize);
-		if ((iError = BSslHandleAsync(pCtx, iRead, ERR_SSL_READ, iTimeo)) < 0)
+		int iError;
+
+		sRead = SSL_read(pCtx->pSSL, pData, sSize);
+		if ((iError = BSslHandleAsync(pCtx, sRead, ERR_SSL_READ, iTimeo)) < 0)
 			return iError;
 		if (iError == 0)
 			break;
 	}
 
-	return iRead;
+	return sRead;
 }
 
-static int BSslWriteLL(SslBindCtx *pCtx, void const *pData, int iSize, int iTimeo)
+static int BSslWriteLL(SslBindCtx *pCtx, void const *pData, size_t sSize, int iTimeo)
 {
-	int iWrite, iError;
+	ssize_t sWrite;
 
 	for (;;) {
-		iWrite = SSL_write(pCtx->pSSL, pData, iSize);
-		if ((iError = BSslHandleAsync(pCtx, iWrite, ERR_SSL_WRITE, iTimeo)) < 0)
+		int iError;
+
+		sWrite = SSL_write(pCtx->pSSL, pData, sSize);
+		if ((iError = BSslHandleAsync(pCtx, sWrite, ERR_SSL_WRITE, iTimeo)) < 0)
 			return iError;
 		if (iError == 0)
 			break;
 	}
 
-	return iWrite;
+	return sWrite;
 }
 
 static int BSslShutdown(SslBindCtx *pCtx)
@@ -222,18 +226,18 @@ static int BSslCtx__Free(void *pPrivate)
 	return 0;
 }
 
-static int BSslCtx__Read(void *pPrivate, void *pData, int iSize, int iTimeo)
+static ssize_t BSslCtx__Read(void *pPrivate, void *pData, size_t sSize, int iTimeo)
 {
 	SslBindCtx *pCtx = (SslBindCtx *) pPrivate;
 
-	return BSslReadLL(pCtx, pData, iSize, iTimeo);
+	return BSslReadLL(pCtx, pData, sSize, iTimeo);
 }
 
-static int BSslCtx__Write(void *pPrivate, void const *pData, int iSize, int iTimeo)
+static ssize_t BSslCtx__Write(void *pPrivate, void const *pData, size_t sSize, int iTimeo)
 {
 	SslBindCtx *pCtx = (SslBindCtx *) pPrivate;
 
-	return BSslWriteLL(pCtx, pData, iSize, iTimeo);
+	return BSslWriteLL(pCtx, pData, sSize, iTimeo);
 }
 
 static int BSslCtx__SendFile(void *pPrivate, char const *pszFilePath, SYS_OFF_T llOffStart,
@@ -264,16 +268,17 @@ static int BSslCtx__SendFile(void *pPrivate, char const *pszFilePath, SYS_OFF_T 
 	}
 	pCurAddr = (char *) pMapAddr + (llOffStart - llAlnOff);
 	while (llOffStart < llOffEnd) {
-		int iSize = (int) Min(BSSL_WRITE_BLKSIZE, llOffEnd - llOffStart), iWrite;
+		size_t sSize = (size_t) Min(BSSL_WRITE_BLKSIZE, llOffEnd - llOffStart);
+		ssize_t sWrite;
 
-		if ((iWrite = BSslWriteLL(pCtx, pCurAddr, iSize, iTimeo)) < 0) {
+		if ((sWrite = BSslWriteLL(pCtx, pCurAddr, sSize, iTimeo)) < 0) {
 			ErrorPush();
 			SysUnmapMMap(hMap, pMapAddr, (SYS_SIZE_T) (llOffEnd - llAlnOff));
 			SysCloseMMap(hMap);
 			return ErrorPop();
 		}
-		pCurAddr += iWrite;
-		llOffStart += iWrite;
+		pCurAddr += sWrite;
+		llOffStart += sWrite;
 	}
 	SysUnmapMMap(hMap, pMapAddr, (SYS_SIZE_T) (llOffEnd - llAlnOff));
 	SysCloseMMap(hMap);

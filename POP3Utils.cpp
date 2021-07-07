@@ -1024,12 +1024,13 @@ static int UPopRetrieveMessage(BSOCK_HANDLE hBSock, int iMsgIndex, char const *p
 		return ErrGetErrorCode();
 	}
 
-	int iLineLength = 0, iGotNL, iGotNLPrev = 1;
+	size_t sLineLength = 0;
+	int iGotNL, iGotNLPrev = 1;
 	SYS_OFF_T llMsgSize = 0;
 
 	for (;;) {
 		if (BSckGetString(hBSock, szRTXBuffer, sizeof(szRTXBuffer) - 3,
-				  iPOP3ClientTimeout, &iLineLength, &iGotNL) == NULL) {
+				  iPOP3ClientTimeout, &sLineLength, &iGotNL) == NULL) {
 			fclose(pMsgFile);
 
 			ErrSetErrorCode(ERR_POP3_RETR_BROKEN);
@@ -1038,14 +1039,14 @@ static int UPopRetrieveMessage(BSOCK_HANDLE hBSock, int iMsgIndex, char const *p
 		if (iGotNL && iGotNLPrev && strcmp(szRTXBuffer, ".") == 0)
 			break;
 		if (iGotNL)
-			memcpy(szRTXBuffer + iLineLength, "\r\n", 3), iLineLength += 2;
-		if (!fwrite(szRTXBuffer, iLineLength, 1, pMsgFile)) {
+			memcpy(szRTXBuffer + sLineLength, "\r\n", 3), sLineLength += 2;
+		if (!fwrite(szRTXBuffer, sLineLength, 1, pMsgFile)) {
 			fclose(pMsgFile);
 
 			ErrSetErrorCode(ERR_FILE_WRITE, pszFileName);
 			return ERR_FILE_WRITE;
 		}
-		llMsgSize += iLineLength;
+		llMsgSize += sLineLength;
 		iGotNLPrev = iGotNL;
 	}
 	fclose(pMsgFile);
@@ -1240,7 +1241,8 @@ static int UPopSChanWriteSeenDB(POP3SyncChannel *pPSChan)
 
 static int UPopSChanFillStatus(POP3SyncChannel *pPSChan)
 {
-	int iLineLength, iMsgID, iHasUIDLs = 0;
+	size_t sLineLength;
+	int iMsgID, iHasUIDLs = 0;
 	char *pszMsgID, *pszMsgUIDL, *pszMsgSize;
 	POP3SyncMsg *pSMsg;
 	char szRTXBuffer[2048] = "UIDL";
@@ -1259,7 +1261,7 @@ static int UPopSChanFillStatus(POP3SyncChannel *pPSChan)
 			    sizeof(szRTXBuffer) - 1, iPOP3ClientTimeout) == 0) {
 		for (;;) {
 			if (BSckGetString(pPSChan->hBSock, szRTXBuffer, sizeof(szRTXBuffer) - 1,
-					  iPOP3ClientTimeout, &iLineLength) == NULL)
+					  iPOP3ClientTimeout, &sLineLength) == NULL)
 				return ErrGetErrorCode();
 			/* Check end of data condition */
 			if (strcmp(szRTXBuffer, ".") == 0)
@@ -1302,7 +1304,7 @@ static int UPopSChanFillStatus(POP3SyncChannel *pPSChan)
 		return ErrGetErrorCode();
 	for (;;) {
 		if (BSckGetString(pPSChan->hBSock, szRTXBuffer, sizeof(szRTXBuffer) - 1,
-				  iPOP3ClientTimeout, &iLineLength) == NULL)
+				  iPOP3ClientTimeout, &sLineLength) == NULL)
 			return ErrGetErrorCode();
 		/* Check end of data condition */
 		if (strcmp(szRTXBuffer, ".") == 0)
@@ -1540,4 +1542,3 @@ int UPopGetLastLoginInfo(UserInfo *pUI, PopLastLoginInfo *pInfo)
 
 	return SysGetHostByName(szIP, -1, pInfo->Address);
 }
-
