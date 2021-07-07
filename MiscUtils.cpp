@@ -66,7 +66,7 @@ int MscDatumAlloc(Datum *pDm, void const *pData, size_t sSize)
 		return ErrGetErrorCode();
 	memcpy(pDm->pData, pData, sSize);
 	pDm->pData[sSize] = 0;
-	pDm->lSize = sSize;
+	pDm->sSize = sSize;
 
 	return 0;
 }

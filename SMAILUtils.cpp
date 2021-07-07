@@ -2397,9 +2397,9 @@ static char const *USmlAddressFromAtPtr(char const *pszAt, char const *pszBase,
 
 	for (; (*pszEnd != '\0') && (strchr("<> \t,\":;'\r\n", *pszEnd) == NULL); pszEnd++);
 
-	int iAddrLength = Min((int) (pszEnd - pszStart), sMaxAddress - 1);
+	size_t sAddrLength = Min((size_t) (pszEnd - pszStart), sMaxAddress - 1);
 
-	Cpy2Sz(pszAddress, pszStart, iAddrLength);
+	Cpy2Sz(pszAddress, pszStart, sAddrLength);
 
 	return pszEnd;
 }

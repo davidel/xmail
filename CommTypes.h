@@ -32,7 +32,7 @@ struct FileSection {
 
 struct Datum {
 	char *pData;
-	long lSize;
+	size_t sSize;
 };
 
 struct LstDatum {

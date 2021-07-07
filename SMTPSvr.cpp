@@ -2472,8 +2472,8 @@ static int SMTPExternalAuthenticate(BSOCK_HANDLE hBSock, SMTPSession &SMTPS,
 	/*
 	 * Load externally supplied credentials ...
 	 */
-	unsigned long ulFileSize;
-	void *pRData = MscLoadFile(szRespFile, &ulFileSize);
+	size_t sFileSize;
+	void *pRData = MscLoadFile(szRespFile, &sFileSize);
 
 	if (pRData != NULL) {
 		SysRemove(szRespFile);
