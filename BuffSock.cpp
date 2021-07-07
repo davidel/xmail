@@ -151,7 +151,7 @@ SYS_SOCKET BSckDetach(BSOCK_HANDLE hBSock, int iCloseSocket)
 	return SockFD;
 }
 
-static int BSckFetchData(BuffSocketData *pBSD, int iTimeout)
+static ssize_t BSckFetchData(BuffSocketData *pBSD, int iTimeout)
 {
 	ssize_t sRdBytes;
 
@@ -320,7 +320,8 @@ ssize_t BSckSendData(BSOCK_HANDLE hBSock, char const *pszBuffer, size_t sSize, i
 	return sSize;
 }
 
-int BSckReadData(BSOCK_HANDLE hBSock, char *pszBuffer, size_t sSize, int iTimeout, size_t sSizeFill)
+ssize_t BSckReadData(BSOCK_HANDLE hBSock, char *pszBuffer, size_t sSize, int iTimeout,
+		     size_t sSizeFill)
 {
 	BuffSocketData *pBSD = (BuffSocketData *) hBSock;
 	size_t sRdBytes = 0, sBufRdBytes = Min(sSize, pBSD->sBytesInBuffer);

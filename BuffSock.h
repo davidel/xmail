@@ -55,8 +55,8 @@ char *BSckGetString(BSOCK_HANDLE hBSock, char *pszBuffer, size_t sMaxChars, int 
 ssize_t BSckSendString(BSOCK_HANDLE hBSock, char const *pszBuffer, int iTimeout);
 int BSckVSendString(BSOCK_HANDLE hBSock, int iTimeout, char const *pszFormat, ...);
 ssize_t BSckSendData(BSOCK_HANDLE hBSock, char const *pszBuffer, size_t sSize, int iTimeout);
-int BSckReadData(BSOCK_HANDLE hBSock, char *pszBuffer, size_t sSize, int iTimeout,
-		 size_t sSizeFill = 0);
+ssize_t BSckReadData(BSOCK_HANDLE hBSock, char *pszBuffer, size_t sSize, int iTimeout,
+		     size_t sSizeFill = 0);
 int BSckSendFile(BSOCK_HANDLE hBSock, char const *pszFilePath, SYS_OFF_T llBaseOffset,
 		 SYS_OFF_T llEndOffset, int iTimeout);
 SYS_SOCKET BSckGetAttachedSocket(BSOCK_HANDLE hBSock);
