@@ -100,7 +100,7 @@ bool USmtpIsFatalError(SMTPError const *pSMTPE);
 char const *USmtpGetErrorMessage(SMTPError const *pSMTPE);
 int USmtpCleanupError(SMTPError *pSMTPE);
 char *USmtpGetSMTPError(SMTPError *pSMTPE, char *pszError, int iMaxError);
-char *USmtpGetSMTPRmtMsgID(char const *pszAckDATA, char *pszRmtMsgID, int iMaxMsg);
+char *USmtpGetSMTPRmtMsgID(char const *pszAckDATA, char *pszRmtMsgID, ssize_t sMaxMsg);
 char const *USmtpGetErrorServer(SMTPError const *pSMTPE);
 SMTPCH_HANDLE USmtpCreateChannel(SMTPGateway const *pGw, char const *pszDomain,
 				 SMTPError *pSMTPE = NULL);
@@ -131,4 +131,3 @@ char *USmtpGetReceived(int iType, char const *pszAuth, char const *const *ppszMs
 		       char const *pszMailFrom, char const *pszRcptTo, char const *pszMessageID);
 
 #endif
-

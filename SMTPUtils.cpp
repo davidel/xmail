@@ -631,19 +631,19 @@ int USmtpSplitEmailAddr(char const *pszAddr, char *pszUser, char *pszDomain)
 		return ERR_BAD_EMAIL_ADDR;
 	}
 
-	int iUserLength = (int) (pszAT - pszAddr);
-	int iDomainLength = strlen(pszAT + 1);
+	size_t sUserLength = (size_t) (pszAT - pszAddr);
+	size_t sDomainLength = strlen(pszAT + 1);
 
 	if (pszUser != NULL) {
-		if (iUserLength == 0) {
+		if (sUserLength == 0) {
 			ErrSetErrorCode(ERR_BAD_EMAIL_ADDR);
 			return ERR_BAD_EMAIL_ADDR;
 		}
-		iUserLength = Min(iUserLength, MAX_ADDR_NAME - 1);
-		Cpy2Sz(pszUser, pszAddr, iUserLength);
+		sUserLength = Min(sUserLength, MAX_ADDR_NAME - 1);
+		Cpy2Sz(pszUser, pszAddr, sUserLength);
 	}
 	if (pszDomain != NULL) {
-		if (iDomainLength == 0) {
+		if (sDomainLength == 0) {
 			ErrSetErrorCode(ERR_BAD_EMAIL_ADDR);
 			return ERR_BAD_EMAIL_ADDR;
 		}
@@ -745,9 +745,10 @@ char *USmtpGetSMTPError(SMTPError *pSMTPE, char *pszError, int iMaxError)
 	return pszError;
 }
 
-char *USmtpGetSMTPRmtMsgID(char const *pszAckDATA, char *pszRmtMsgID, int iMaxMsg)
+char *USmtpGetSMTPRmtMsgID(char const *pszAckDATA, char *pszRmtMsgID,
+			   ssize_t sMaxMsg)
 {
-	int iRmtMsgLen;
+	size_t sRmtMsgLen;
 	char const *pszTmp;
 
 	for (; isdigit(*pszAckDATA); pszAckDATA++);
@@ -755,13 +756,13 @@ char *USmtpGetSMTPRmtMsgID(char const *pszAckDATA, char *pszRmtMsgID, int iMaxMs
 	if ((pszTmp = strchr(pszAckDATA, '<')) != NULL) {
 		pszAckDATA = pszTmp + 1;
 		if ((pszTmp = strchr(pszAckDATA, '>')) == NULL)
-			iRmtMsgLen = strlen(pszAckDATA);
+			sRmtMsgLen = strlen(pszAckDATA);
 		else
-			iRmtMsgLen = (int) (pszTmp - pszAckDATA);
+			sRmtMsgLen = (size_t) (pszTmp - pszAckDATA);
 	} else
-		iRmtMsgLen = strlen(pszAckDATA);
-	iRmtMsgLen = Min(iRmtMsgLen, iMaxMsg - 1);
-	Cpy2Sz(pszRmtMsgID, pszAckDATA, iRmtMsgLen);
+		sRmtMsgLen = strlen(pszAckDATA);
+	sRmtMsgLen = Min(sRmtMsgLen, sMaxMsg - 1);
+	Cpy2Sz(pszRmtMsgID, pszAckDATA, sRmtMsgLen);
 
 	return pszRmtMsgID;
 }
@@ -875,20 +876,20 @@ static int USmtpDoPlainAuth(SmtpChannel *pSmtpCh, char const *pszServer,
 		return ERR_BAD_SMTP_AUTH_CONFIG;
 	}
 	/* Build plain text authentication token ( "\0" Username "\0" Password "\0" ) */
-	int iAuthLength = 1;
+	size_t sAuthLength = 1;
 	char szAuthBuffer[2048] = "";
 
-	strcpy(szAuthBuffer + iAuthLength, ppszAuthTokens[1]);
-	iAuthLength += strlen(ppszAuthTokens[1]) + 1;
+	strcpy(szAuthBuffer + sAuthLength, ppszAuthTokens[1]);
+	sAuthLength += strlen(ppszAuthTokens[1]) + 1;
 
-	strcpy(szAuthBuffer + iAuthLength, ppszAuthTokens[2]);
-	iAuthLength += strlen(ppszAuthTokens[2]);
+	strcpy(szAuthBuffer + sAuthLength, ppszAuthTokens[2]);
+	sAuthLength += strlen(ppszAuthTokens[2]);
 
-	int iEnc64Length;
+	size_t sEnc64Length;
 	char szEnc64Token[1024] = "";
 
-	iEnc64Length = sizeof(szEnc64Token) - 1;
-	Base64Encode(szAuthBuffer, iAuthLength, szEnc64Token, &iEnc64Length);
+	sEnc64Length = sizeof(szEnc64Token) - 1;
+	Base64Encode(szAuthBuffer, sAuthLength, szEnc64Token, &sEnc64Length);
 
 	/* Send AUTH command */
 	int iSvrReponse;
@@ -939,9 +940,9 @@ static int USmtpDoLoginAuth(SmtpChannel *pSmtpCh, char const *pszServer,
 		return ErrGetErrorCode();
 	}
 	/* Send username */
-	int iEnc64Length = sizeof(szAuthBuffer) - 1;
+	size_t sEnc64Length = sizeof(szAuthBuffer) - 1;
 
-	Base64Encode(ppszAuthTokens[1], strlen(ppszAuthTokens[1]), szAuthBuffer, &iEnc64Length);
+	Base64Encode(ppszAuthTokens[1], strlen(ppszAuthTokens[1]), szAuthBuffer, &sEnc64Length);
 
 	if (!USmtpResponseClass(iSvrReponse = USmtpSendCommand(pSmtpCh->hBSock, szAuthBuffer,
 							       szAuthBuffer,
@@ -957,8 +958,8 @@ static int USmtpDoLoginAuth(SmtpChannel *pSmtpCh, char const *pszServer,
 		return ErrGetErrorCode();
 	}
 	/* Send password */
-	iEnc64Length = sizeof(szAuthBuffer) - 1;
-	Base64Encode(ppszAuthTokens[2], strlen(ppszAuthTokens[2]), szAuthBuffer, &iEnc64Length);
+	sEnc64Length = sizeof(szAuthBuffer) - 1;
+	Base64Encode(ppszAuthTokens[2], strlen(ppszAuthTokens[2]), szAuthBuffer, &sEnc64Length);
 
 	if (!USmtpResponseClass(iSvrReponse = USmtpSendCommand(pSmtpCh->hBSock, szAuthBuffer,
 							       szAuthBuffer,
@@ -1005,12 +1006,12 @@ static int USmtpDoCramMD5Auth(SmtpChannel *pSmtpCh, char const *pszServer,
 		return ErrGetErrorCode();
 	}
 	/* Retrieve server challenge */
-	int iDec64Length;
+	size_t sDec64Length;
 	char *pszAuth = szAuthBuffer + 4;
 	char szChallenge[1024] = "";
 
-	iDec64Length = sizeof(szChallenge);
-	if (Base64Decode(pszAuth, strlen(pszAuth), szChallenge, &iDec64Length) != 0) {
+	sDec64Length = sizeof(szChallenge);
+	if (Base64Decode(pszAuth, strlen(pszAuth), szChallenge, &sDec64Length) != 0) {
 		if (pSMTPE != NULL)
 			USmtpSetError(pSMTPE, iSvrReponse, szAuthBuffer, pSmtpCh->pszServer);
 
@@ -1022,13 +1023,13 @@ static int USmtpDoCramMD5Auth(SmtpChannel *pSmtpCh, char const *pszServer,
 		return ErrGetErrorCode();
 
 	/* Send response */
-	int iEnc64Length;
+	size_t sEnc64Length;
 	char szResponse[1024] = "";
 
 	SysSNPrintf(szResponse, sizeof(szResponse) - 1, "%s %s", ppszAuthTokens[1], szChallenge);
 
-	iEnc64Length = sizeof(szAuthBuffer) - 1;
-	Base64Encode(szResponse, strlen(szResponse), szAuthBuffer, &iEnc64Length);
+	sEnc64Length = sizeof(szAuthBuffer) - 1;
+	Base64Encode(szResponse, strlen(szResponse), szAuthBuffer, &sEnc64Length);
 
 	if (!USmtpResponseClass(iSvrReponse = USmtpSendCommand(pSmtpCh->hBSock, szAuthBuffer,
 							       szAuthBuffer,

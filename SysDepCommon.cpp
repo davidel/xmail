@@ -159,7 +159,7 @@ int SysGetHostByName(const char *pszName, int iFamily, SYS_INET_ADDR &AddrInfo)
 	}
 	if (pCRes != NULL && sizeof(AddrInfo.Addr) >= pCRes->ai_addrlen) {
 		ZeroData(AddrInfo);
-		AddrInfo.iSize = pCRes->ai_addrlen;
+		AddrInfo.iSize = (int) pCRes->ai_addrlen;
 		memcpy(AddrInfo.Addr, pCRes->ai_addr, pCRes->ai_addrlen);
 	}
 	freeaddrinfo(pRes);
@@ -357,4 +357,3 @@ int SysInetAddrMatch(SYS_INET_ADDR const &Addr, SYS_INET_ADDR const &TestAddr)
 	memset(Mask, 0xff, sizeof(Mask));
 	return SysInetAddrMatch(Addr, Mask, sizeof(Mask), TestAddr);
 }
-

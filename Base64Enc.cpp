@@ -38,7 +38,7 @@
 static char basis_64[] =
 	"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/???????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????";
 
-static char index_64[128] = {
+static char const index_64[128] = {
 	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
 	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
 	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 62, -1, -1, -1, 63,
@@ -49,37 +49,37 @@ static char index_64[128] = {
 	41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, -1, -1, -1, -1, -1
 };
 
-int Base64Encode(const char *pIn, int iInSize, char *pszOut, int *piOutSize)
+int Base64Encode(const char *pIn, size_t sInSize, char *pszOut, size_t *pOutSize)
 {
 	const unsigned char *in = (const unsigned char *) pIn;
 	unsigned char *out = (unsigned char *) pszOut;
 	unsigned char oval;
 	char *blah;
-	int olen, omax = *piOutSize;
+	size_t olen, omax = *pOutSize;
 
-	olen = (iInSize + 2) / 3 * 4;
-	*piOutSize = olen;
+	olen = (sInSize + 2) / 3 * 4;
+	*pOutSize = olen;
 	if (omax < olen)
 		return BUFOVER;
 
 	blah = (char *) out;
-	while (iInSize >= 3) {
+	while (sInSize >= 3) {
 		/* user provided max buffer size; make sure we don't go over it */
 		*out++ = basis_64[in[0] >> 2];
 		*out++ = basis_64[((in[0] << 4) & 0x30) | (in[1] >> 4)];
 		*out++ = basis_64[((in[1] << 2) & 0x3c) | (in[2] >> 6)];
 		*out++ = basis_64[in[2] & 0x3f];
 		in += 3;
-		iInSize -= 3;
+		sInSize -= 3;
 	}
-	if (iInSize > 0) {
+	if (sInSize > 0) {
 		/* user provided max buffer size; make sure we don't go over it */
 		*out++ = basis_64[in[0] >> 2];
 		oval = (in[0] << 4) & 0x30;
-		if (iInSize > 1)
+		if (sInSize > 1)
 			oval |= in[1] >> 4;
 		*out++ = basis_64[oval];
-		*out++ = (iInSize < 2) ? '=' : basis_64[(in[1] << 2) & 0x3c];
+		*out++ = (sInSize < 2) ? '=' : basis_64[(in[1] << 2) & 0x3c];
 		*out++ = '=';
 	}
 
@@ -89,17 +89,18 @@ int Base64Encode(const char *pIn, int iInSize, char *pszOut, int *piOutSize)
 	return OK;
 }
 
-int Base64Decode(const char *pszIn, int iInSize, char *pOut, int *piOutSize)
+int Base64Decode(const char *pszIn, size_t sInSize, char *pOut, size_t *pOutSize)
 {
-	int i, c1, c2, c3, c4, omax = *piOutSize - 1, len = 0;
+	size_t omax = *pOutSize - 1, len = 0;
+	int i, c1, c2, c3, c4;
 
-	if (iInSize >= 2 && pszIn[0] == '+' && pszIn[1] == ' ')
-		pszIn += 2, iInSize -= 2;
+	if (sInSize >= 2 && pszIn[0] == '+' && pszIn[1] == ' ')
+		pszIn += 2, sInSize -= 2;
 
 	if (*pszIn == '\0')
 		return FAIL;
 
-	for (i = 0; i < iInSize / 4; i++) {
+	for (i = 0; i < sInSize / 4; i++) {
 		c1 = pszIn[0];
 		if (CHAR64(c1) == -1)
 			return FAIL;
@@ -131,8 +132,7 @@ int Base64Decode(const char *pszIn, int iInSize, char *pOut, int *piOutSize)
 		}
 	}
 	*pOut = 0;
-	*piOutSize = len;
+	*pOutSize = len;
 
 	return OK;
 }
-

@@ -579,7 +579,7 @@ static int UsrAliasLookupNameLK(char const *pszAlsFilePath, char const *pszDomai
 						   &ulLkHVal, 1);
 
 	if (hIndexLookup != INVALID_INDEX_HANDLE) {
-		int iMaxLength = -1;
+		ssize_t sMaxLength = -1;
 
 		for (ppszTabTokens = TbixFirstRecord(hIndexLookup); ppszTabTokens != NULL;
 		     ppszTabTokens = TbixNextRecord(hIndexLookup)) {
@@ -588,11 +588,11 @@ static int UsrAliasLookupNameLK(char const *pszAlsFilePath, char const *pszDomai
 			if (iFieldsCount >= alsMax &&
 			    StrIWildMatch(pszDomain, ppszTabTokens[alsDomain]) &&
 			    StrIWildMatch(pszAlias, ppszTabTokens[alsAlias])) {
-				int iLength = strlen(ppszTabTokens[alsDomain]) +
+				size_t sLength = strlen(ppszTabTokens[alsDomain]) +
 					strlen(ppszTabTokens[alsAlias]);
 
-				if (iLength > iMaxLength) {
-					iMaxLength = iLength;
+				if (sLength > sMaxLength) {
+					sMaxLength = sLength;
 
 					if (pszName != NULL)
 						strcpy(pszName, ppszTabTokens[alsName]);
@@ -602,7 +602,7 @@ static int UsrAliasLookupNameLK(char const *pszAlsFilePath, char const *pszDomai
 		}
 		TbixCloseHandle(hIndexLookup);
 
-		if (iMaxLength > 0)
+		if (sMaxLength > 0)
 			return 1;
 	}
 
@@ -2167,4 +2167,3 @@ AliasInfo *UsrAliasGetNext(ALSF_HANDLE hAliasDB)
 
 	return pAI;
 }
-

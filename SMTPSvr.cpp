@@ -2635,12 +2635,12 @@ static int SMTPDoAuthPlain(BSOCK_HANDLE hBSock, SMTPSession &SMTPS, char const *
 		return ERR_BAD_SMTP_CMD_SYNTAX;
 	}
 
-	int iDec64Length;
+	size_t sDec64Length;
 	char szClientAuth[PLAIN_AUTH_PARAM_SIZE] = "";
 
 	ZeroData(szClientAuth);
-	iDec64Length = sizeof(szClientAuth);
-	if (Base64Decode(pszAuthParam, strlen(pszAuthParam), szClientAuth, &iDec64Length) != 0) {
+	sDec64Length = sizeof(szClientAuth);
+	if (Base64Decode(pszAuthParam, strlen(pszAuthParam), szClientAuth, &sDec64Length) != 0) {
 		SMTPSendError(hBSock, SMTPS, "501 Syntax error in parameters or arguments");
 
 		ErrSetErrorCode(ERR_BAD_SMTP_CMD_SYNTAX);
@@ -2680,13 +2680,13 @@ static int SMTPDoAuthPlain(BSOCK_HANDLE hBSock, SMTPSession &SMTPS, char const *
 static int SMTPDoAuthLogin(BSOCK_HANDLE hBSock, SMTPSession &SMTPS, char const *pszAuthParam)
 {
 	/* Emit encoded64 username request */
-	int iEnc64Length;
+	size_t sEnc64Length;
 	char szUsername[512] = "";
 
 	if (pszAuthParam == NULL || IsEmptyString(pszAuthParam)) {
-		iEnc64Length = sizeof(szUsername) - 1;
+		sEnc64Length = sizeof(szUsername) - 1;
 		Base64Encode(LOGIN_AUTH_USERNAME, strlen(LOGIN_AUTH_USERNAME),
-			     szUsername, &iEnc64Length);
+			     szUsername, &sEnc64Length);
 		if (BSckVSendString(hBSock, SMTPS.pSMTPCfg->iTimeout, "334 %s",
 				    szUsername) < 0 ||
 		    BSckGetString(hBSock, szUsername, sizeof(szUsername) - 1,
@@ -2699,8 +2699,8 @@ static int SMTPDoAuthLogin(BSOCK_HANDLE hBSock, SMTPSession &SMTPS, char const *
 	/* Emit encoded64 password request */
 	char szPassword[512] = "";
 
-	iEnc64Length = sizeof(szPassword) - 1;
-	Base64Encode(LOGIN_AUTH_PASSWORD, strlen(LOGIN_AUTH_PASSWORD), szPassword, &iEnc64Length);
+	sEnc64Length = sizeof(szPassword) - 1;
+	Base64Encode(LOGIN_AUTH_PASSWORD, strlen(LOGIN_AUTH_PASSWORD), szPassword, &sEnc64Length);
 
 	if (BSckVSendString(hBSock, SMTPS.pSMTPCfg->iTimeout, "334 %s", szPassword) < 0 ||
 	    BSckGetString(hBSock, szPassword, sizeof(szPassword) - 1,
@@ -2708,12 +2708,12 @@ static int SMTPDoAuthLogin(BSOCK_HANDLE hBSock, SMTPSession &SMTPS, char const *
 		return ErrGetErrorCode();
 
 	/* Decode (base64) username */
-	int iDec64Length;
+	size_t sDec64Length;
 	char szDecodeBuffer[512] = "";
 
-	iDec64Length = sizeof(szDecodeBuffer);
+	sDec64Length = sizeof(szDecodeBuffer);
 	if (Base64Decode(pszAuthParam, strlen(pszAuthParam), szDecodeBuffer,
-			 &iDec64Length) != 0) {
+			 &sDec64Length) != 0) {
 		SMTPSendError(hBSock, SMTPS, "501 Syntax error in parameters or arguments");
 
 		ErrSetErrorCode(ERR_BAD_SMTP_CMD_SYNTAX);
@@ -2722,8 +2722,8 @@ static int SMTPDoAuthLogin(BSOCK_HANDLE hBSock, SMTPSession &SMTPS, char const *
 	StrSNCpy(szUsername, szDecodeBuffer);
 
 	/* Decode (base64) password */
-	iDec64Length = sizeof(szDecodeBuffer);
-	if (Base64Decode(szPassword, strlen(szPassword), szDecodeBuffer, &iDec64Length) != 0) {
+	sDec64Length = sizeof(szDecodeBuffer);
+	if (Base64Decode(szPassword, strlen(szPassword), szDecodeBuffer, &sDec64Length) != 0) {
 		SMTPSendError(hBSock, SMTPS, "501 Syntax error in parameters or arguments");
 
 		ErrSetErrorCode(ERR_BAD_SMTP_CMD_SYNTAX);
@@ -2855,11 +2855,11 @@ static int SMTPTryApplyCMD5Auth(SMTPSession &SMTPS, char const *pszChallenge,
 static int SMTPDoAuthCramMD5(BSOCK_HANDLE hBSock, SMTPSession &SMTPS, char const *pszAuthParam)
 {
 	/* Emit encoded64 challenge and get client response */
-	int iEnc64Length;
+	size_t sEnc64Length;
 	char szChallenge[512] = "";
 
-	iEnc64Length = sizeof(szChallenge) - 1;
-	Base64Encode(SMTPS.szTimeStamp, strlen(SMTPS.szTimeStamp), szChallenge, &iEnc64Length);
+	sEnc64Length = sizeof(szChallenge) - 1;
+	Base64Encode(SMTPS.szTimeStamp, strlen(SMTPS.szTimeStamp), szChallenge, &sEnc64Length);
 
 	if (BSckVSendString(hBSock, SMTPS.pSMTPCfg->iTimeout, "334 %s", szChallenge) < 0 ||
 	    BSckGetString(hBSock, szChallenge, sizeof(szChallenge) - 1,
@@ -2867,11 +2867,11 @@ static int SMTPDoAuthCramMD5(BSOCK_HANDLE hBSock, SMTPSession &SMTPS, char const
 		return ErrGetErrorCode();
 
 	/* Decode ( base64 ) client response */
-	int iDec64Length;
+	size_t sDec64Length;
 	char szClientResp[512] = "";
 
-	iDec64Length = sizeof(szClientResp);
-	if (Base64Decode(szChallenge, strlen(szChallenge), szClientResp, &iDec64Length) != 0) {
+	sDec64Length = sizeof(szClientResp);
+	if (Base64Decode(szChallenge, strlen(szChallenge), szClientResp, &sDec64Length) != 0) {
 		SMTPSendError(hBSock, SMTPS, "501 Syntax error in parameters or arguments");
 
 		ErrSetErrorCode(ERR_BAD_SMTP_CMD_SYNTAX);
