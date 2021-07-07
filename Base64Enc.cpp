@@ -91,8 +91,8 @@ int Base64Encode(const char *pIn, size_t sInSize, char *pszOut, size_t *pOutSize
 
 int Base64Decode(const char *pszIn, size_t sInSize, char *pOut, size_t *pOutSize)
 {
-	size_t omax = *pOutSize - 1, len = 0;
-	int i, c1, c2, c3, c4;
+	size_t i, omax = *pOutSize - 1, len = 0;
+	int c1, c2, c3, c4;
 
 	if (sInSize >= 2 && pszIn[0] == '+' && pszIn[1] == ' ')
 		pszIn += 2, sInSize -= 2;

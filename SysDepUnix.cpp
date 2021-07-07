@@ -572,113 +572,115 @@ void SysListenSocket(SYS_SOCKET SockFD, int iConnections)
 	listen((int) SockFD, iConnections);
 }
 
-int SysRecvData(SYS_SOCKET SockFD, char *pszBuffer, int iBufferSize, int iTimeout)
+ssize_t SysRecvData(SYS_SOCKET SockFD, char *pszBuffer, size_t sBufferSize, int iTimeout)
 {
-	int iRecvBytes;
+	ssize_t sRecvBytes;
 
 	if (SysFdWait((int) SockFD, POLLIN, iTimeout) < 0)
 		return ErrGetErrorCode();
 
-	while ((iRecvBytes = recv((int) SockFD, pszBuffer, iBufferSize, 0)) == -1 &&
+	while ((sRecvBytes = recv((int) SockFD, pszBuffer, sBufferSize, 0)) == -1 &&
 	       SYS_INT_CALL());
 
-	if (iRecvBytes == -1) {
+	if (sRecvBytes == -1) {
 		ErrSetErrorCode(ERR_NETWORK);
 		return ERR_NETWORK;
 	}
 
-	return iRecvBytes;
+	return sRecvBytes;
 }
 
-int SysRecv(SYS_SOCKET SockFD, char *pszBuffer, int iBufferSize, int iTimeout)
+ssize_t SysRecv(SYS_SOCKET SockFD, char *pszBuffer, size_t sBufferSize, int iTimeout)
 {
-	int iRtxBytes = 0, iRtxCurrent;
+	ssize_t sRtxBytes = 0, sRtxCurrent;
 
-	while (iRtxBytes < iBufferSize) {
-		iRtxCurrent = SysRecvData(SockFD, pszBuffer + iRtxBytes,
-					  iBufferSize - iRtxBytes, iTimeout);
-		if (iRtxCurrent <= 0)
-			return iRtxBytes;
-		iRtxBytes += iRtxCurrent;
+	while (sRtxBytes < sBufferSize) {
+		sRtxCurrent = SysRecvData(SockFD, pszBuffer + sRtxBytes,
+					  sBufferSize - sRtxBytes, iTimeout);
+		if (sRtxCurrent <= 0)
+			return sRtxBytes;
+		sRtxBytes += sRtxCurrent;
 	}
 
-	return iRtxBytes;
+	return sRtxBytes;
 }
 
-int SysRecvDataFrom(SYS_SOCKET SockFD, SYS_INET_ADDR *pFrom, char *pszBuffer,
-		    int iBufferSize, int iTimeout)
+ssize_t SysRecvDataFrom(SYS_SOCKET SockFD, SYS_INET_ADDR *pFrom, char *pszBuffer,
+			size_t sBufferSize, int iTimeout)
 {
 	socklen_t SockALen = (socklen_t) sizeof(pFrom->Addr);
-	int iRecvBytes;
+	ssize_t sRecvBytes;
 
 	if (SysFdWait((int) SockFD, POLLIN, iTimeout) < 0)
 		return ErrGetErrorCode();
 
-	while ((iRecvBytes = recvfrom((int) SockFD, pszBuffer, iBufferSize, 0,
+	while ((sRecvBytes = recvfrom((int) SockFD, pszBuffer, sBufferSize, 0,
 				      (struct sockaddr *) pFrom->Addr,
 				      &SockALen)) == -1 && SYS_INT_CALL());
 
-	if (iRecvBytes == -1) {
+	if (sRecvBytes == -1) {
 		ErrSetErrorCode(ERR_NETWORK);
 		return ERR_NETWORK;
 	}
 	pFrom->iSize = (int) SockALen;
 
-	return iRecvBytes;
+	return sRecvBytes;
 }
 
-int SysSendData(SYS_SOCKET SockFD, char const *pszBuffer, int iBufferSize, int iTimeout)
+ssize_t SysSendData(SYS_SOCKET SockFD, char const *pszBuffer, size_t sBufferSize,
+		    int iTimeout)
 {
-	int iSendBytes;
+	ssize_t sSendBytes;
 
 	if (SysFdWait((int) SockFD, POLLOUT, iTimeout) < 0)
 		return ErrGetErrorCode();
 
-	while ((iSendBytes = send((int) SockFD, pszBuffer, iBufferSize, 0)) == -1 &&
+	while ((sSendBytes = send((int) SockFD, pszBuffer, sBufferSize, 0)) == -1 &&
 	       SYS_INT_CALL());
 
-	if (iSendBytes == -1) {
+	if (sSendBytes == -1) {
 		ErrSetErrorCode(ERR_NETWORK);
 		return ERR_NETWORK;
 	}
 
-	return iSendBytes;
+	return sSendBytes;
 }
 
-int SysSend(SYS_SOCKET SockFD, char const *pszBuffer, int iBufferSize, int iTimeout)
+ssize_t SysSend(SYS_SOCKET SockFD, char const *pszBuffer, size_t sBufferSize,
+		int iTimeout)
 {
-	int iRtxBytes = 0, iRtxCurrent;
+	ssize_t sRtxBytes = 0, sRtxCurrent;
 
-	while (iRtxBytes < iBufferSize) {
-		iRtxCurrent = SysSendData(SockFD, pszBuffer + iRtxBytes,
-					  iBufferSize - iRtxBytes, iTimeout);
-		if (iRtxCurrent <= 0)
-			return iRtxBytes;
-		iRtxBytes += iRtxCurrent;
+	while (sRtxBytes < sBufferSize) {
+		sRtxCurrent = SysSendData(SockFD, pszBuffer + sRtxBytes,
+					  sBufferSize - sRtxBytes, iTimeout);
+		if (sRtxCurrent <= 0)
+			return sRtxBytes;
+		sRtxBytes += sRtxCurrent;
 	}
 
-	return iRtxBytes;
+	return sRtxBytes;
 }
 
-int SysSendDataTo(SYS_SOCKET SockFD, const SYS_INET_ADDR *pTo,
-		  char const *pszBuffer, int iBufferSize, int iTimeout)
+ssize_t SysSendDataTo(SYS_SOCKET SockFD, const SYS_INET_ADDR *pTo,
+		      char const *pszBuffer, size_t sBufferSize, int iTimeout)
 {
-	int iSendBytes;
+	ssize_t sSendBytes;
 
 	if (SysFdWait((int) SockFD, POLLOUT, iTimeout) < 0)
 		return ErrGetErrorCode();
 
-	while ((iSendBytes = sendto((int) SockFD, pszBuffer, iBufferSize, 0,
+	while ((sSendBytes = sendto((int) SockFD, pszBuffer, sBufferSize, 0,
 				    (const struct sockaddr *) pTo->Addr,
 				    pTo->iSize)) == -1 &&
 	       SYS_INT_CALL());
 
-	if (iSendBytes == -1) {
+	if (sSendBytes == -1) {
 		ErrSetErrorCode(ERR_NETWORK);
 		return ERR_NETWORK;
 	}
 
-	return iSendBytes;
+	return sSendBytes;
 }
 
 int SysConnect(SYS_SOCKET SockFD, const SYS_INET_ADDR *pSockName, int iTimeout)
@@ -1819,12 +1821,12 @@ char *SysStrTok(char *pszData, char const *pszDelim, char **ppszSavePtr)
 	return strtok_r(pszData, pszDelim, ppszSavePtr);
 }
 
-char *SysCTime(time_t *pTimer, char *pszBuffer, int iBufferSize)
+char *SysCTime(time_t *pTimer, char *pszBuffer, size_t sBufferSize)
 {
 #if (_POSIX_C_SOURCE - 0 >= 199506L) || defined(_POSIX_PTHREAD_SEMANTICS)
 	return ctime_r(pTimer, pszBuffer);
 #else
-	return ctime_r(pTimer, pszBuffer, iBufferSize);
+	return ctime_r(pTimer, pszBuffer, sBufferSize);
 #endif
 }
 
@@ -1838,12 +1840,12 @@ struct tm *SysGMTime(time_t *pTimer, struct tm *pTStruct)
 	return gmtime_r(pTimer, pTStruct);
 }
 
-char *SysAscTime(struct tm *pTStruct, char *pszBuffer, int iBufferSize)
+char *SysAscTime(struct tm *pTStruct, char *pszBuffer, size_t sBufferSize)
 {
 #if (_POSIX_C_SOURCE - 0 >= 199506L) || defined(_POSIX_PTHREAD_SEMANTICS)
 	return asctime_r(pTStruct, pszBuffer);
 #else
-	return asctime_r(pTStruct, pszBuffer, iBufferSize);
+	return asctime_r(pTStruct, pszBuffer, sBufferSize);
 #endif
 }
 

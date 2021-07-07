@@ -404,34 +404,34 @@ void SysListenSocket(SYS_SOCKET SockFD, int iConnections)
 	listen(SockFD, iConnections);
 }
 
-static int SysRecvLL(SYS_SOCKET SockFD, char *pszBuffer, int iBufferSize)
+static ssize_t SysRecvLL(SYS_SOCKET SockFD, char *pszBuffer, size_t sBufferSize)
 {
 	DWORD dwRtxBytes = 0;
 	DWORD dwRtxFlags = 0;
 	WSABUF WSABuff;
 
 	ZeroData(WSABuff);
-	WSABuff.len = iBufferSize;
+	WSABuff.len = sBufferSize;
 	WSABuff.buf = pszBuffer;
 
-	return WSARecv(SockFD, &WSABuff, 1, &dwRtxBytes, &dwRtxFlags,
-		       NULL, NULL) == 0 ? (int) dwRtxBytes: -WSAGetLastError();
+	return WSARecv(SockFD, &WSABuff, 1, &dwRtxBytes, &dwRtxFlags, NULL, NULL) == 0 ?
+		(ssize_t) dwRtxBytes: (ssize_t) -WSAGetLastError();
 }
 
-static int SysSendLL(SYS_SOCKET SockFD, char const *pszBuffer, int iBufferSize)
+static ssize_t SysSendLL(SYS_SOCKET SockFD, char const *pszBuffer, size_t sBufferSize)
 {
 	DWORD dwRtxBytes = 0;
 	WSABUF WSABuff;
 
 	ZeroData(WSABuff);
-	WSABuff.len = iBufferSize;
+	WSABuff.len = sBufferSize;
 	WSABuff.buf = (char *) pszBuffer;
 
-	return WSASend(SockFD, &WSABuff, 1, &dwRtxBytes, 0,
-		       NULL, NULL) == 0 ? (int) dwRtxBytes: -WSAGetLastError();
+	return WSASend(SockFD, &WSABuff, 1, &dwRtxBytes, 0, NULL, NULL) == 0 ?
+		(ssize_t) dwRtxBytes: (ssize_t) -WSAGetLastError();
 }
 
-int SysRecvData(SYS_SOCKET SockFD, char *pszBuffer, int iBufferSize, int iTimeout)
+ssize_t SysRecvData(SYS_SOCKET SockFD, char *pszBuffer, size_t sBufferSize, int iTimeout)
 {
 	HANDLE hReadEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
 
@@ -440,7 +440,7 @@ int SysRecvData(SYS_SOCKET SockFD, char *pszBuffer, int iBufferSize, int iTimeou
 		return ERR_CREATEEVENT;
 	}
 
-	int iRecvBytes = 0;
+	ssize_t sRecvBytes = 0;
 	HANDLE hWaitEvents[2] = { hReadEvent, hShutdownEvent };
 
 	for (;;) {
@@ -461,10 +461,10 @@ int SysRecvData(SYS_SOCKET SockFD, char *pszBuffer, int iBufferSize, int iTimeou
 			return ERR_TIMEOUT;
 		}
 
-		if ((iRecvBytes = SysRecvLL(SockFD, pszBuffer, iBufferSize)) >= 0)
+		if ((sRecvBytes = SysRecvLL(SockFD, pszBuffer, sBufferSize)) >= 0)
 			break;
 
-		int iErrorCode = -iRecvBytes;
+		int iErrorCode = (int) -sRecvBytes;
 
 		if (iErrorCode != WSAEWOULDBLOCK) {
 			CloseHandle(hReadEvent);
@@ -476,27 +476,27 @@ int SysRecvData(SYS_SOCKET SockFD, char *pszBuffer, int iBufferSize, int iTimeou
 	}
 	CloseHandle(hReadEvent);
 
-	return iRecvBytes;
+	return sRecvBytes;
 }
 
-int SysRecv(SYS_SOCKET SockFD, char *pszBuffer, int iBufferSize, int iTimeout)
+ssize_t SysRecv(SYS_SOCKET SockFD, char *pszBuffer, size_t sBufferSize, int iTimeout)
 {
-	int iRtxBytes = 0;
+	ssize_t sRtxBytes = 0;
 
-	while (iRtxBytes < iBufferSize) {
-		int iRtxCurrent = SysRecvData(SockFD, pszBuffer + iRtxBytes,
-					      iBufferSize - iRtxBytes, iTimeout);
+	while (sRtxBytes < sBufferSize) {
+		ssize_t sRtxCurrent = SysRecvData(SockFD, pszBuffer + sRtxBytes,
+						  sBufferSize - sRtxBytes, iTimeout);
 
-		if (iRtxCurrent <= 0)
-			return iRtxBytes;
-		iRtxBytes += iRtxCurrent;
+		if (sRtxCurrent <= 0)
+			return sRtxBytes;
+		sRtxBytes += sRtxCurrent;
 	}
 
-	return iRtxBytes;
+	return sRtxBytes;
 }
 
-int SysRecvDataFrom(SYS_SOCKET SockFD, SYS_INET_ADDR *pFrom, char *pszBuffer,
-		    int iBufferSize, int iTimeout)
+ssize_t SysRecvDataFrom(SYS_SOCKET SockFD, SYS_INET_ADDR *pFrom, char *pszBuffer,
+			size_t sBufferSize, int iTimeout)
 {
 	HANDLE hReadEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
 
@@ -510,7 +510,7 @@ int SysRecvDataFrom(SYS_SOCKET SockFD, SYS_INET_ADDR *pFrom, char *pszBuffer,
 	HANDLE hWaitEvents[2] = { hReadEvent, hShutdownEvent };
 
 	ZeroData(WSABuff);
-	WSABuff.len = iBufferSize;
+	WSABuff.len = sBufferSize;
 	WSABuff.buf = pszBuffer;
 
 	for (;;) {
@@ -550,10 +550,11 @@ int SysRecvDataFrom(SYS_SOCKET SockFD, SYS_INET_ADDR *pFrom, char *pszBuffer,
 	}
 	CloseHandle(hReadEvent);
 
-	return (int) dwRtxBytes;
+	return (ssize_t) dwRtxBytes;
 }
 
-int SysSendData(SYS_SOCKET SockFD, char const *pszBuffer, int iBufferSize, int iTimeout)
+ssize_t SysSendData(SYS_SOCKET SockFD, char const *pszBuffer, size_t sBufferSize,
+		    int iTimeout)
 {
 	HANDLE hWriteEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
 
@@ -562,7 +563,7 @@ int SysSendData(SYS_SOCKET SockFD, char const *pszBuffer, int iBufferSize, int i
 		return ERR_CREATEEVENT;
 	}
 
-	int iSendBytes = 0;
+	ssize_t sSendBytes = 0;
 	HANDLE hWaitEvents[2] = { hWriteEvent, hShutdownEvent };
 
 	for (;;) {
@@ -583,10 +584,10 @@ int SysSendData(SYS_SOCKET SockFD, char const *pszBuffer, int iBufferSize, int i
 			return ERR_TIMEOUT;
 		}
 
-		if ((iSendBytes = SysSendLL(SockFD, pszBuffer, iBufferSize)) >= 0)
+		if ((sSendBytes = SysSendLL(SockFD, pszBuffer, sBufferSize)) >= 0)
 			break;
 
-		int iErrorCode = -iSendBytes;
+		int iErrorCode = (int) -sSendBytes;
 
 		if (iErrorCode != WSAEWOULDBLOCK) {
 			CloseHandle(hWriteEvent);
@@ -598,27 +599,28 @@ int SysSendData(SYS_SOCKET SockFD, char const *pszBuffer, int iBufferSize, int i
 	}
 	CloseHandle(hWriteEvent);
 
-	return iSendBytes;
+	return sSendBytes;
 }
 
-int SysSend(SYS_SOCKET SockFD, char const *pszBuffer, int iBufferSize, int iTimeout)
+ssize_t SysSend(SYS_SOCKET SockFD, char const *pszBuffer, size_t sBufferSize,
+		int iTimeout)
 {
-	int iRtxBytes = 0;
+	ssize_t sRtxBytes = 0;
 
-	while (iRtxBytes < iBufferSize) {
-		int iRtxCurrent = SysSendData(SockFD, pszBuffer + iRtxBytes,
-					      iBufferSize - iRtxBytes, iTimeout);
+	while (sRtxBytes < sBufferSize) {
+		ssize_t iRtxCurrent = SysSendData(SockFD, pszBuffer + sRtxBytes,
+						  sBufferSize - sRtxBytes, iTimeout);
 
 		if (iRtxCurrent <= 0)
-			return iRtxBytes;
-		iRtxBytes += iRtxCurrent;
+			return sRtxBytes;
+		sRtxBytes += iRtxCurrent;
 	}
 
-	return iRtxBytes;
+	return sRtxBytes;
 }
 
-int SysSendDataTo(SYS_SOCKET SockFD, const SYS_INET_ADDR *pTo,
-		  char const *pszBuffer, int iBufferSize, int iTimeout)
+ssize_t SysSendDataTo(SYS_SOCKET SockFD, const SYS_INET_ADDR *pTo,
+		      char const *pszBuffer, size_t sBufferSize, int iTimeout)
 {
 	HANDLE hWriteEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
 
@@ -632,7 +634,7 @@ int SysSendDataTo(SYS_SOCKET SockFD, const SYS_INET_ADDR *pTo,
 	HANDLE hWaitEvents[2] = { hWriteEvent, hShutdownEvent };
 
 	ZeroData(WSABuff);
-	WSABuff.len = iBufferSize;
+	WSABuff.len = sBufferSize;
 	WSABuff.buf = (char *) pszBuffer;
 
 	for (;;) {
@@ -670,7 +672,7 @@ int SysSendDataTo(SYS_SOCKET SockFD, const SYS_INET_ADDR *pTo,
 	}
 	CloseHandle(hWriteEvent);
 
-	return (int) dwRtxBytes;
+	return (ssize_t) dwRtxBytes;
 }
 
 int SysConnect(SYS_SOCKET SockFD, const SYS_INET_ADDR *pSockName, int iTimeout)
@@ -1800,10 +1802,10 @@ struct tm *SysGMTime(time_t *pTimer, struct tm *pTStruct)
 	return pTStruct;
 }
 
-char *SysAscTime(struct tm *pTStruct, char *pszBuffer, int iBufferSize)
+char *SysAscTime(struct tm *pTStruct, char *pszBuffer, size_t sBufferSize)
 {
-	strncpy(pszBuffer, asctime(pTStruct), iBufferSize);
-	pszBuffer[iBufferSize - 1] = '\0';
+	strncpy(pszBuffer, asctime(pTStruct), sBufferSize);
+	pszBuffer[sBufferSize - 1] = '\0';
 
 	return pszBuffer;
 }

@@ -78,14 +78,14 @@ int SysShutdownSocket(SYS_SOCKET SockFD, int iHow);
 int SysBlockSocket(SYS_SOCKET SockFD, int iBlocking);
 int SysBindSocket(SYS_SOCKET SockFD, const SYS_INET_ADDR *SockName);
 void SysListenSocket(SYS_SOCKET SockFD, int iConnections);
-int SysRecvData(SYS_SOCKET SockFD, char *pszBuffer, int iBufferSize, int iTimeout);
-int SysRecv(SYS_SOCKET SockFD, char *pszBuffer, int iBufferSize, int iTimeout);
-int SysRecvDataFrom(SYS_SOCKET SockFD, SYS_INET_ADDR *pFrom, char *pszBuffer,
-		    int iBufferSize, int iTimeout);
-int SysSendData(SYS_SOCKET SockFD, char const *pszBuffer, int iBufferSize, int iTimeout);
-int SysSend(SYS_SOCKET SockFD, char const *pszBuffer, int iBufferSize, int iTimeout);
-int SysSendDataTo(SYS_SOCKET SockFD, const SYS_INET_ADDR *pTo,
-		  char const *pszBuffer, int iBufferSize, int iTimeout);
+ssize_t SysRecvData(SYS_SOCKET SockFD, char *pszBuffer, size_t sBufferSize, int iTimeout);
+ssize_t SysRecv(SYS_SOCKET SockFD, char *pszBuffer, size_t sBufferSize, int iTimeout);
+ssize_t SysRecvDataFrom(SYS_SOCKET SockFD, SYS_INET_ADDR *pFrom, char *pszBuffer,
+			size_t sBufferSize, int iTimeout);
+ssize_t SysSendData(SYS_SOCKET SockFD, char const *pszBuffer, size_t sBufferSize, int iTimeout);
+ssize_t SysSend(SYS_SOCKET SockFD, char const *pszBuffer, size_t sBufferSize, int iTimeout);
+ssize_t SysSendDataTo(SYS_SOCKET SockFD, const SYS_INET_ADDR *pTo,
+		      char const *pszBuffer, size_t sBufferSize, int iTimeout);
 int SysConnect(SYS_SOCKET SockFD, const SYS_INET_ADDR *pSockName, int iTimeout);
 SYS_SOCKET SysAccept(SYS_SOCKET SockFD, SYS_INET_ADDR *pSockName, int iTimeout);
 int SysSelect(int iMaxFD, SYS_fd_set *pReadFDs, SYS_fd_set *pWriteFDs, SYS_fd_set *pExcptFDs,
@@ -197,10 +197,10 @@ int SysVSNPrintf(char *pszBuffer, int iSize, char const *pszFormat, va_list Args
 int SysFileSync(FILE *pFile);
 
 char *SysStrTok(char *pszData, char const *pszDelim, char **ppszSavePtr);
-char *SysCTime(time_t *pTimer, char *pszBuffer, int iBufferSize);
+char *SysCTime(time_t *pTimer, char *pszBuffer, size_t sBufferSize);
 struct tm *SysLocalTime(time_t *pTimer, struct tm *pTStruct);
 struct tm *SysGMTime(time_t *pTimer, struct tm *pTStruct);
-char *SysAscTime(struct tm *pTStruct, char *pszBuffer, int iBufferSize);
+char *SysAscTime(struct tm *pTStruct, char *pszBuffer, size_t sBufferSize);
 long SysGetTimeZone(void);
 long SysGetDayLight(void);
 
