@@ -76,7 +76,7 @@ void *MscLoadFile(char const *pszFilePath, size_t *pFileSize);
 int MscLockFile(char const *pszFileName, int iMaxWait, int iWaitStep = LOCK_FILE_WAITSTEP);
 int MscGetTimeNbrString(char *pszTimeStr, int iStringSize, time_t tTime = 0);
 int MscGetTime(struct tm &tmLocal, int &iDiffHours, int &iDiffMins, time_t tCurr = 0);
-char *MscStrftime(struct tm const *ptmTime, char *pszDateStr, int iSize);
+char *MscStrftime(struct tm const *ptmTime, char *pszDateStr, size_t sSize);
 int MscGetTimeStr(char *pszTimeStr, size_t sStringSize, time_t tCurr = 0);
 int MscGetDirectorySize(char const *pszPath, bool bRecurse, SYS_OFF_T &llDirSize,
 			unsigned long &ulNumFiles, int (*pFNValidate) (char const *) = NULL);

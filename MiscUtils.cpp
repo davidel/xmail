@@ -367,7 +367,7 @@ int MscGetTime(struct tm &tmLocal, int &iDiffHours, int &iDiffMins, time_t tCurr
 	return 0;
 }
 
-char *MscStrftime(struct tm const *ptmTime, char *pszDateStr, int iSize)
+char *MscStrftime(struct tm const *ptmTime, char *pszDateStr, size_t sSize)
 {
 	static char const * const pszWDays[] = {
 		"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"
@@ -377,7 +377,7 @@ char *MscStrftime(struct tm const *ptmTime, char *pszDateStr, int iSize)
 		"Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
 	};
 
-	SysSNPrintf(pszDateStr, iSize, "%s, %d %s %d %02d:%02d:%02d",
+	SysSNPrintf(pszDateStr, sSize, "%s, %d %s %d %02d:%02d:%02d",
 		    pszWDays[ptmTime->tm_wday], ptmTime->tm_mday,
 		    pszMonths[ptmTime->tm_mon], ptmTime->tm_year + 1900,
 		    ptmTime->tm_hour, ptmTime->tm_min, ptmTime->tm_sec);
