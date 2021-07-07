@@ -29,34 +29,34 @@
 #include "MailSvr.h"
 #include "MailConfig.h"
 
-char *CfgGetRootPath(char *pszPath, int iMaxPath)
+char *CfgGetRootPath(char *pszPath, size_t sMaxPath)
 {
-	StrNCpy(pszPath, szMailPath, iMaxPath);
+	StrNCpy(pszPath, szMailPath, sMaxPath);
 
 	return pszPath;
 }
 
-char *CfgGetBasedPath(const char *pszFullPath, char *pszBasePath, int iMaxPath)
+char *CfgGetBasedPath(const char *pszFullPath, char *pszBasePath, size_t sMaxPath)
 {
-	int iRootLength;
+	size_t sRootLength;
 	char szRootPath[SYS_MAX_PATH] = "";
 
 	CfgGetRootPath(szRootPath, sizeof(szRootPath));
-	iRootLength = strlen(szRootPath);
-	if (strncmp(pszFullPath, szRootPath, iRootLength) == 0)
-		StrNCpy(pszBasePath, pszFullPath + iRootLength, iMaxPath);
+	sRootLength = strlen(szRootPath);
+	if (strncmp(pszFullPath, szRootPath, sRootLength) == 0)
+		StrNCpy(pszBasePath, pszFullPath + sRootLength, sMaxPath);
 	else
-		StrNCpy(pszBasePath, pszFullPath, iMaxPath);
+		StrNCpy(pszBasePath, pszFullPath, sMaxPath);
 
 	return pszBasePath;
 }
 
-char *CfgGetFullPath(const char *pszRelativePath, char *pszFullPath, int iMaxPath)
+char *CfgGetFullPath(const char *pszRelativePath, char *pszFullPath, size_t sMaxPath)
 {
-	CfgGetRootPath(pszFullPath, iMaxPath);
+	CfgGetRootPath(pszFullPath, sMaxPath);
 	StrNCat(pszFullPath,
 		(*pszRelativePath != SYS_SLASH_CHAR) ? pszRelativePath: pszRelativePath + 1,
-		iMaxPath);
+		sMaxPath);
 
 	return pszFullPath;
 }

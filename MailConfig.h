@@ -23,8 +23,8 @@
 #ifndef _MAILCONFIG_H
 #define _MAILCONFIG_H
 
-char *CfgGetRootPath(char *pszPath, int iMaxPath);
-char *CfgGetBasedPath(const char *pszFullPath, char *pszBasePath, int iMaxPath);
-char *CfgGetFullPath(const char *pszRelativePath, char *pszFullPath, int iMaxPath);
+char *CfgGetRootPath(char *pszPath, size_t sMaxPath);
+char *CfgGetBasedPath(const char *pszFullPath, char *pszBasePath, size_t sMaxPath);
+char *CfgGetFullPath(const char *pszRelativePath, char *pszFullPath, size_t sMaxPath);
 
 #endif
