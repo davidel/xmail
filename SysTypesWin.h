@@ -100,7 +100,8 @@ typedef HANDLE SYS_PEVENT;
 typedef size_t SYS_THREAD;
 typedef void *SYS_MMAP;
 typedef SYS_INT64 SYS_OFF_T;
-typedef long SYS_SIZE_T;
+typedef SSIZE_T SYS_SIZE_T;
+typedef SSIZE_T ssize_t;
 
 struct SYS_THREAD_ONCE {
 	LONG lOnce;
