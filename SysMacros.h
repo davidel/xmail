@@ -69,22 +69,22 @@
 			(a)[__i] = (v);			\
 	} while (0)
 #define StrVSprint(r, l, f) do {					\
-		int iPSize, iCurrSize = 256;				\
+		ssize_t sPSize, sCurrSize = 256;			\
 		va_list Args;						\
 		for (;;) {						\
-			if ((r = (char *) SysAlloc(iCurrSize)) == NULL)	\
+			if ((r = (char *) SysAlloc(sCurrSize)) == NULL)	\
 				break;					\
 			va_start(Args, l);				\
-			if ((iPSize = SysVSNPrintf(r, iCurrSize - 1, f, Args)) >= 0 && \
-			    iPSize < iCurrSize) {			\
+			if ((sPSize = SysVSNPrintf(r, sCurrSize - 1, f, Args)) >= 0 && \
+			    sPSize < sCurrSize) {			\
 				va_end(Args);				\
 				break;					\
 			}						\
 			va_end(Args);					\
-			if (iPSize > 0)					\
-				iCurrSize = (4 * iPSize) / 3 + 2;	\
+			if (sPSize > 0)					\
+				sCurrSize = (4 * sPSize) / 3 + 2;	\
 			else						\
-				iCurrSize *= 2;				\
+				sCurrSize *= 2;				\
 			SysFree(r);					\
 		}							\
 	} while (0)

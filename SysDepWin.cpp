@@ -1562,7 +1562,7 @@ int SysExistDir(char const *pszDirPath)
 	return (dwAttr & FILE_ATTRIBUTE_DIRECTORY) ? 1: 0;
 }
 
-SYS_HANDLE SysFirstFile(char const *pszPath, char *pszFileName, int iSize)
+SYS_HANDLE SysFirstFile(char const *pszPath, char *pszFileName, size_t sSize)
 {
 	char szMatch[SYS_MAX_PATH];
 
@@ -1592,7 +1592,7 @@ SYS_HANDLE SysFirstFile(char const *pszPath, char *pszFileName, int iSize)
 	pFFD->hFind = hFind;
 	pFFD->WFD = WFD;
 
-	StrNCpy(pszFileName, pFFD->WFD.cFileName, iSize);
+	StrNCpy(pszFileName, pFFD->WFD.cFileName, sSize);
 
 	return (SYS_HANDLE) pFFD;
 }
@@ -1611,13 +1611,13 @@ SYS_OFF_T SysGetSize(SYS_HANDLE hFind)
 	return (SYS_OFF_T) pFFD->WFD.nFileSizeLow | (((SYS_OFF_T) pFFD->WFD.nFileSizeHigh) << 32);
 }
 
-int SysNextFile(SYS_HANDLE hFind, char *pszFileName, int iSize)
+int SysNextFile(SYS_HANDLE hFind, char *pszFileName, size_t sSize)
 {
 	FileFindData *pFFD = (FileFindData *) hFind;
 
 	if (!FindNextFile(pFFD->hFind, &pFFD->WFD))
 		return 0;
-	StrNCpy(pszFileName, pFFD->WFD.cFileName, iSize);
+	StrNCpy(pszFileName, pFFD->WFD.cFileName, sSize);
 
 	return 1;
 }

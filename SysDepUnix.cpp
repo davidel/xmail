@@ -1604,7 +1604,7 @@ static struct dirent *SysReadDir(DIR *pDIR, struct dirent *pDirEntry) {
 	return pResult;
 }
 
-SYS_HANDLE SysFirstFile(char const *pszPath, char *pszFileName, int iSize)
+SYS_HANDLE SysFirstFile(char const *pszPath, char *pszFileName, size_t sSize)
 {
 	DIR *pDIR = opendir(pszPath);
 
@@ -1632,7 +1632,7 @@ SYS_HANDLE SysFirstFile(char const *pszPath, char *pszFileName, int iSize)
 	AppendSlash(pFFD->szPath);
 	pFFD->pDIR = pDIR;
 
-	StrNCpy(pszFileName, pDirEntry->d_name, iSize);
+	StrNCpy(pszFileName, pDirEntry->d_name, sSize);
 
 	char szFilePath[SYS_MAX_PATH];
 
@@ -1663,7 +1663,7 @@ SYS_OFF_T SysGetSize(SYS_HANDLE hFind)
 	return pFFD->FStat.st_size;
 }
 
-int SysNextFile(SYS_HANDLE hFind, char *pszFileName, int iSize)
+int SysNextFile(SYS_HANDLE hFind, char *pszFileName, size_t sSize)
 {
 	FileFindData *pFFD = (FileFindData *) hFind;
 	FilledDirent FDE;
@@ -1672,7 +1672,7 @@ int SysNextFile(SYS_HANDLE hFind, char *pszFileName, int iSize)
 	if (pDirEntry == NULL)
 		return 0;
 
-	StrNCpy(pszFileName, pDirEntry->d_name, iSize);
+	StrNCpy(pszFileName, pDirEntry->d_name, sSize);
 
 	char szFilePath[SYS_MAX_PATH];
 
