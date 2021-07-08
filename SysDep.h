@@ -97,15 +97,15 @@ int SysGetAddrFamily(SYS_INET_ADDR const &AddrInfo);
 int SysGetAddrPort(SYS_INET_ADDR const &AddrInfo);
 int SysSetAddrPort(SYS_INET_ADDR &AddrInfo, int iPortNo);
 int SysGetHostByName(char const *pszName, int iFamily, SYS_INET_ADDR &AddrInfo);
-int SysGetHostByAddr(SYS_INET_ADDR const &AddrInfo, char *pszFQDN, int iSize);
+int SysGetHostByAddr(SYS_INET_ADDR const &AddrInfo, char *pszFQDN, size_t sSize);
 int SysGetPeerInfo(SYS_SOCKET SockFD, SYS_INET_ADDR &AddrInfo);
 int SysGetSockInfo(SYS_SOCKET SockFD, SYS_INET_ADDR &AddrInfo);
-char *SysInetNToA(SYS_INET_ADDR const &AddrInfo, char *pszIP, int iSize);
-char *SysInetRevNToA(SYS_INET_ADDR const &AddrInfo, char *pszRevIP, int iSize);
-void const *SysInetAddrData(SYS_INET_ADDR const &AddrInfo, int *piSize);
+char *SysInetNToA(SYS_INET_ADDR const &AddrInfo, char *pszIP, size_t sSize);
+char *SysInetRevNToA(SYS_INET_ADDR const &AddrInfo, char *pszRevIP, size_t sSize);
+void const *SysInetAddrData(SYS_INET_ADDR const &AddrInfo, size_t *pSize);
 int SysInetIPV6CompatIPV4(SYS_INET_ADDR const &Addr);
 int SysInetIPV6ToIPV4(SYS_INET_ADDR const &SAddr, SYS_INET_ADDR &DAddr);
-int SysInetAddrMatch(SYS_INET_ADDR const &Addr, SYS_UINT8 const *pMask, int iMaskSize,
+int SysInetAddrMatch(SYS_INET_ADDR const &Addr, SYS_UINT8 const *pMask, size_t sMaskSize,
 		     SYS_INET_ADDR const &TestAddr);
 int SysInetAddrMatch(SYS_INET_ADDR const &Addr, SYS_INET_ADDR const &TestAddr);
 

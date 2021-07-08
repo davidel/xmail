@@ -171,12 +171,12 @@ int SysGetHostByName(const char *pszName, int iFamily, SYS_INET_ADDR &AddrInfo)
 	return 0;
 }
 
-int SysGetHostByAddr(SYS_INET_ADDR const &AddrInfo, char *pszFQDN, int iSize)
+int SysGetHostByAddr(SYS_INET_ADDR const &AddrInfo, char *pszFQDN, size_t sSize)
 {
 	int iError;
 
 	if ((iError = getnameinfo((struct sockaddr const *) AddrInfo.Addr, AddrInfo.iSize,
-				  pszFQDN, iSize, NULL, 0, NI_NAMEREQD)) != 0) {
+				  pszFQDN, sSize, NULL, 0, NI_NAMEREQD)) != 0) {
 		char szIP[128];
 
 		ErrSetErrorCode(ERR_GET_SOCK_HOST, SysInetNToA(AddrInfo, szIP, sizeof(szIP)));
@@ -214,18 +214,18 @@ int SysGetSockInfo(SYS_SOCKET SockFD, SYS_INET_ADDR &AddrInfo)
 	return 0;
 }
 
-char *SysInetNToA(SYS_INET_ADDR const &AddrInfo, char *pszIP, int iSize)
+char *SysInetNToA(SYS_INET_ADDR const &AddrInfo, char *pszIP, size_t sSize)
 {
 
 	SetEmptyString(pszIP);
 	if (getnameinfo((struct sockaddr const *) AddrInfo.Addr, AddrInfo.iSize,
-			pszIP, iSize, NULL, 0, NI_NUMERICHOST) != 0)
+			pszIP, sSize, NULL, 0, NI_NUMERICHOST) != 0)
 		ErrSetErrorCode(ERR_INVALID_INET_ADDR);
 
 	return pszIP;
 }
 
-char *SysInetRevNToA(SYS_INET_ADDR const &AddrInfo, char *pszRevIP, int iSize)
+char *SysInetRevNToA(SYS_INET_ADDR const &AddrInfo, char *pszRevIP, size_t sSize)
 {
 	int i;
 	char *pszCur;
@@ -235,15 +235,15 @@ char *SysInetRevNToA(SYS_INET_ADDR const &AddrInfo, char *pszRevIP, int iSize)
 	switch (SysGetAddrFamily(AddrInfo)) {
 	case AF_INET:
 		pAddr = (SYS_UINT8 const *) &SYS_IN4(&AddrInfo)->sin_addr;
-		SysSNPrintf(pszRevIP, iSize, "%u.%u.%u.%u.",
+		SysSNPrintf(pszRevIP, sSize, "%u.%u.%u.%u.",
 			    pAddr[3], pAddr[2], pAddr[1], pAddr[0]);
 		break;
 
 	case AF_INET6:
 		pAddr = (SYS_UINT8 const *) &SYS_IN6(&AddrInfo)->sin6_addr;
-		for (i = 15, pszCur = pszRevIP; i >= 0 && iSize > 4;
-		     i--, pszCur += 4, iSize -= 4)
-			SysSNPrintf(pszCur, iSize, "%x.%x.", pAddr[i] & 0xf,
+		for (i = 15, pszCur = pszRevIP; i >= 0 && sSize > 4;
+		     i--, pszCur += 4, sSize -= 4)
+			SysSNPrintf(pszCur, sSize, "%x.%x.", pAddr[i] & 0xf,
 				    pAddr[i] >> 4);
 		break;
 
@@ -254,15 +254,15 @@ char *SysInetRevNToA(SYS_INET_ADDR const &AddrInfo, char *pszRevIP, int iSize)
 	return pszRevIP;
 }
 
-void const *SysInetAddrData(SYS_INET_ADDR const &AddrInfo, int *piSize)
+void const *SysInetAddrData(SYS_INET_ADDR const &AddrInfo, size_t *pSize)
 {
 	switch (SysGetAddrFamily(AddrInfo)) {
 	case AF_INET:
-		*piSize = (int) sizeof(SYS_IN4(&AddrInfo)->sin_addr);
+		*pSize = (size_t) sizeof(SYS_IN4(&AddrInfo)->sin_addr);
 		return &SYS_IN4(&AddrInfo)->sin_addr;
 
 	case AF_INET6:
-		*piSize = (int) sizeof(SYS_IN6(&AddrInfo)->sin6_addr);
+		*pSize = (size_t) sizeof(SYS_IN6(&AddrInfo)->sin6_addr);
 		return &SYS_IN6(&AddrInfo)->sin6_addr;
 	}
 
@@ -272,11 +272,12 @@ void const *SysInetAddrData(SYS_INET_ADDR const &AddrInfo, int *piSize)
 
 int SysInetIPV6CompatIPV4(SYS_INET_ADDR const &Addr)
 {
-	int i, iASize;
+	int i;
+	size_t sASize;
 	SYS_UINT8 const *pAData;
 
 	if (SysGetAddrFamily(Addr) != AF_INET6 ||
-	    (pAData = (SYS_UINT8 const *) SysInetAddrData(Addr, &iASize)) == NULL)
+	    (pAData = (SYS_UINT8 const *) SysInetAddrData(Addr, &sASize)) == NULL)
 		return 0;
 	/*
 	 * First 80 bit must be zero ...
@@ -307,15 +308,16 @@ int SysInetIPV6ToIPV4(SYS_INET_ADDR const &SAddr, SYS_INET_ADDR &DAddr)
 	return 0;
 }
 
-int SysInetAddrMatch(SYS_INET_ADDR const &Addr, SYS_UINT8 const *pMask, int iMaskSize,
+int SysInetAddrMatch(SYS_INET_ADDR const &Addr, SYS_UINT8 const *pMask, size_t sMaskSize,
 		     SYS_INET_ADDR const &TestAddr)
 {
-	int i, iASize, iTASize, iAFamily, iTAFamily;
+	int iAFamily, iTAFamily;
+	size_t i, sASize, sTASize;
 	SYS_UINT8 const *pAData, *pTAData;
 
-	if ((pAData = (SYS_UINT8 const *) SysInetAddrData(Addr, &iASize)) == NULL ||
-	    (pTAData = (SYS_UINT8 const *) SysInetAddrData(TestAddr, &iTASize)) == NULL ||
-	    iMaskSize < iASize || iMaskSize < iTASize)
+	if ((pAData = (SYS_UINT8 const *) SysInetAddrData(Addr, &sASize)) == NULL ||
+	    (pTAData = (SYS_UINT8 const *) SysInetAddrData(TestAddr, &sTASize)) == NULL ||
+	    sMaskSize < sASize || sMaskSize < sTASize)
 		return 0;
 	iAFamily = SysGetAddrFamily(Addr);
 	iTAFamily = SysGetAddrFamily(TestAddr);
@@ -328,22 +330,22 @@ int SysInetAddrMatch(SYS_INET_ADDR const &Addr, SYS_UINT8 const *pMask, int iMas
 			if (iTAFamily == AF_INET6) {
 				if (!SysInetIPV6CompatIPV4(TestAddr))
 					return 0;
-				pTAData += iTASize - iASize;
+				pTAData += sTASize - sASize;
 			} else
 				return 0;
 		} else if (iAFamily == AF_INET6) {
 			if (iTAFamily == AF_INET) {
 				if (!SysInetIPV6CompatIPV4(Addr))
 					return 0;
-				pAData += iASize - iTASize;
-				pMask += iASize - iTASize;
-				iASize = iTASize;
+				pAData += sASize - sTASize;
+				pMask += sASize - sTASize;
+				sASize = sTASize;
 			} else
 				return 0;
 		} else
 			return 0;
 	}
-	for (i = 0; i < iASize; i++)
+	for (i = 0; i < sASize; i++)
 		if ((pAData[i] & pMask[i]) != (pTAData[i] & pMask[i]))
 			return 0;
 

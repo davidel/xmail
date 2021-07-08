@@ -80,8 +80,9 @@ char *MscStrftime(struct tm const *ptmTime, char *pszDateStr, size_t sSize);
 int MscGetTimeStr(char *pszTimeStr, size_t sStringSize, time_t tCurr = 0);
 int MscGetDirectorySize(char const *pszPath, bool bRecurse, SYS_OFF_T &llDirSize,
 			unsigned long &ulNumFiles, int (*pFNValidate) (char const *) = NULL);
-FSCAN_HANDLE MscFirstFile(char const *pszPath, int iListDirs, char *pszFileName, int iSize);
-int MscNextFile(FSCAN_HANDLE hFileScan, char *pszFileName, int iSize);
+FSCAN_HANDLE MscFirstFile(char const *pszPath, int iListDirs, char *pszFileName,
+			  size_t sSize);
+int MscNextFile(FSCAN_HANDLE hFileScan, char *pszFileName, size_t sSize);
 void MscCloseFindFile(FSCAN_HANDLE hFileScan);
 int MscGetFileList(char const *pszPath, int iListDirs, SysListHead *pHead);
 int MscCreateEmptyFile(char const *pszFileName);
@@ -99,8 +100,8 @@ char *MscGetConfigLine(char *pszLine, int iLineSize, FILE *pFile, bool bSkipComm
 int MscGetPeerHost(SYS_SOCKET SockFD, char *pszFQDN, int iSize);
 int MscGetSockHost(SYS_SOCKET SockFD, char *pszFQDN, int iSize);
 int MscGetServerAddress(char const *pszServer, SYS_INET_ADDR &SvrAddr, int iPortNo = 0);
-int MscSplitFQDN(char const *pszFQDN, char *pszHost, int iHSize,
-		 char *pszDomain, int iDSize);
+int MscSplitFQDN(char const *pszFQDN, char *pszHost, size_t sHSize,
+		 char *pszDomain, size_t sDSize);
 char *MscLogFilePath(char const *pszLogFile, char *pszLogFilePath);
 int MscFileLog(char const *pszLogFile, char const *pszFormat, ...);
 int MscSplitPath(char const *pszFilePath, char *pszDir, int iDSize,

@@ -442,7 +442,8 @@ int MscGetDirectorySize(char const *pszPath, bool bRecurse, SYS_OFF_T &llDirSize
 	return 0;
 }
 
-FSCAN_HANDLE MscFirstFile(char const *pszPath, int iListDirs, char *pszFileName, int iSize)
+FSCAN_HANDLE MscFirstFile(char const *pszPath, int iListDirs, char *pszFileName,
+			  size_t sSize)
 {
 	FileScan *pFS;
 	LstDatum *pLDm;
@@ -463,12 +464,12 @@ FSCAN_HANDLE MscFirstFile(char const *pszPath, int iListDirs, char *pszFileName,
 	pLDm = SYS_LIST_ENTRY(pFS->pPos, LstDatum, LLnk);
 
 	pFS->pPos = SYS_LIST_NEXT(pFS->pPos, &pFS->FList);
-	StrNCpy(pszFileName, pLDm->Data.pData, iSize);
+	StrNCpy(pszFileName, pLDm->Data.pData, sSize);
 
 	return (FSCAN_HANDLE) pFS;
 }
 
-int MscNextFile(FSCAN_HANDLE hFileScan, char *pszFileName, int iSize)
+int MscNextFile(FSCAN_HANDLE hFileScan, char *pszFileName, size_t sSize)
 {
 	FileScan *pFS = (FileScan *) hFileScan;
 	LstDatum *pLDm;
@@ -478,7 +479,7 @@ int MscNextFile(FSCAN_HANDLE hFileScan, char *pszFileName, int iSize)
 	pLDm = SYS_LIST_ENTRY(pFS->pPos, LstDatum, LLnk);
 
 	pFS->pPos = SYS_LIST_NEXT(pFS->pPos, &pFS->FList);
-	StrNCpy(pszFileName, pLDm->Data.pData, iSize);
+	StrNCpy(pszFileName, pLDm->Data.pData, sSize);
 
 	return 1;
 }
@@ -750,26 +751,26 @@ int MscGetServerAddress(char const *pszServer, SYS_INET_ADDR &SvrAddr, int iPort
 	return 0;
 }
 
-int MscSplitFQDN(char const *pszFQDN, char *pszHost, int iHSize,
-		 char *pszDomain, int iDSize)
+int MscSplitFQDN(char const *pszFQDN, char *pszHost, size_t sHSize,
+		 char *pszDomain, size_t sDSize)
 {
 	char const *pszDot = strchr(pszFQDN, '.');
 
 	if (pszDot == NULL) {
 		if (pszHost != NULL)
-			StrNCpy(pszHost, pszFQDN, iHSize);
+			StrNCpy(pszHost, pszFQDN, sHSize);
 		if (pszDomain != NULL)
 			SetEmptyString(pszDomain);
 	} else {
 		if (pszHost != NULL) {
-			int iHostLength = (int) (pszDot - pszFQDN);
+			size_t sHostLength = (size_t) (pszDot - pszFQDN);
 
-			if (iHostLength >= iHSize)
-				iHostLength = iHSize - 1;
-			Cpy2Sz(pszHost, pszFQDN, iHostLength);
+			if (sHostLength >= sHSize)
+				sHostLength = sHSize - 1;
+			Cpy2Sz(pszHost, pszFQDN, sHostLength);
 		}
 		if (pszDomain != NULL) {
-			StrNCpy(pszDomain, pszDot + 1, iDSize);
+			StrNCpy(pszDomain, pszDot + 1, sDSize);
 			DelFinalChar(pszDomain, '.');
 		}
 	}
@@ -1013,40 +1014,40 @@ int MscAcceptServerConnection(SYS_SOCKET const *pSockFDs, int iNumSockFDs,
 
 int MscLoadAddressFilter(char const *const *ppszFilter, int iNumTokens, AddressFilter &AF)
 {
-	int iASize;
+	size_t sASize;
 	void const *pAData;
 	char const *pszMask;
 	SYS_INET_ADDR Mask;
 
 	if ((pszMask = strchr(ppszFilter[0], '/')) != NULL) {
-		int i;
-		int iAddrLength = (int) (pszMask - ppszFilter[0]);
-		int iMaskBits = atoi(pszMask + 1);
+		size_t i;
+		size_t sAddrLength = (size_t) (pszMask - ppszFilter[0]);
+		size_t sMaskBits = atoi(pszMask + 1);
 		char szFilter[128];
 
-		iAddrLength = Min(iAddrLength, (int) sizeof(szFilter) - 1);
-		Cpy2Sz(szFilter, ppszFilter[0], iAddrLength);
+		sAddrLength = Min(sAddrLength, sizeof(szFilter) - 1);
+		Cpy2Sz(szFilter, ppszFilter[0], sAddrLength);
 		if (SysGetHostByName(szFilter, -1, AF.Addr) < 0)
 			return ErrGetErrorCode();
 
 		ZeroData(AF.Mask);
-		iMaskBits = Min(iMaskBits, CHAR_BIT * (int) sizeof(AF.Mask));
-		for (i = 0; (i + CHAR_BIT) <= iMaskBits; i += CHAR_BIT)
+		sMaskBits = Min(sMaskBits, CHAR_BIT * sizeof(AF.Mask));
+		for (i = 0; (i + CHAR_BIT) <= sMaskBits; i += CHAR_BIT)
 			AF.Mask[i / CHAR_BIT] = 0xff;
-		if (i < iMaskBits)
+		if (i < sMaskBits)
 			AF.Mask[i / CHAR_BIT] = (SYS_UINT8)
-				(((1 << (iMaskBits - i)) - 1) << (CHAR_BIT - iMaskBits + i));
+				(((1 << (sMaskBits - i)) - 1) << (CHAR_BIT - sMaskBits + i));
 	} else if (iNumTokens > 1) {
 		/*
 		 * This is for the old IPV4 representation. They both must
 		 * be two IPV4 addresses (first network, second netmask).
 		 */
-		if (SysGetHostByName(ppszFilter[0], AF_INET, AF.Addr) < 0 ||
-		    SysGetHostByName(ppszFilter[1], AF_INET, Mask) < 0 ||
-		    (pAData = SysInetAddrData(Mask, &iASize)) == NULL)
+		if (SysGetHostByName(ppszFilter[0], SYS_INET46, AF.Addr) < 0 ||
+		    SysGetHostByName(ppszFilter[1], SYS_INET46, Mask) < 0 ||
+		    (pAData = SysInetAddrData(Mask, &sASize)) == NULL)
 			return ErrGetErrorCode();
 		ZeroData(AF.Mask);
-		memcpy(AF.Mask, pAData, Min(iASize, (int) sizeof(AF.Mask)));
+		memcpy(AF.Mask, pAData, Min(sASize, sizeof(AF.Mask)));
 	} else {
 		ErrSetErrorCode(ERR_INVALID_PARAMETER);
 		return ERR_INVALID_PARAMETER;
